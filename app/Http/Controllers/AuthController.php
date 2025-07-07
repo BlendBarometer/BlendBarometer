@@ -20,9 +20,6 @@ class AuthController extends Controller
 
     const EMAIL_COOLDOWN_MINUTES = 1;
 
-    const MAIL_HOST = 'smtp.gmail.com';
-    const MAIL_PORT = 587;
-
     public function login()
     {
         if (app()->isLocal()) {
@@ -68,9 +65,9 @@ class AuthController extends Controller
         $mail->isSMTP();
         $mail->SMTPAuth = true;
 
-        $mail->Host = self::MAIL_HOST;
+        $mail->Host = env('MAIL_HOST');
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port = self::MAIL_PORT;
+        $mail->Port = env('MAIL_PORT');
 
         $mail->Username = env('MAIL_USERNAME');
         $mail->Password = env('MAIL_PASSWORD');

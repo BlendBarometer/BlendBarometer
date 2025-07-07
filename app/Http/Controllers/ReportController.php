@@ -32,9 +32,6 @@ class ReportController extends Controller
     private $valueWidth = 3000;
     private $paddingWidth = 300;
 
-    const MAIL_HOST = 'smtp.gmail.com';
-    const MAIL_PORT = 587;
-
     public function sendReport()
     {
         $phpWord = new PhpWord();
@@ -80,9 +77,9 @@ class ReportController extends Controller
             $mail = new PHPMailer(true);
             $mail->isSMTP();
             $mail->SMTPAuth = true;
-            $mail->Host = self::MAIL_HOST;
+            $mail->Host = env('MAIL_HOST');
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-            $mail->Port = self::MAIL_PORT;
+            $mail->Port = env('MAIL_PORT');
             $mail->Username = env('MAIL_USERNAME');
             $mail->Password = env('MAIL_PASSWORD');
             $mail->CharSet = 'UTF-8';
