@@ -4,7 +4,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BlendBarometer</title>
+
+    <title>BlendBarometer - Meetinstrument voor blended onderwijs</title>
+    <meta name="title" content="BlendBarometer - Meetinstrument voor blended onderwijs"/>
+    <meta name="description"
+          content="De BlendBarometer is een meetinstrument om de kwaliteit van de Blended module te meten en de kwalitatieve en harmonieuze mix van leeractiviteiten te beoordelen."/>
+    <meta name="keywords"
+          content="BlendBarometer, blend barometer, blended learning, blended onderwijs, blended module, blended leren, blended onderwijs kwaliteitsmeting, blended module kwaliteitsmeting, Avans, Avans Hogeschool, Avans BlendBarometer">
+
+    <meta property="og:type" content="website"/>
+    <meta property="og:url" content="https://blendbarometer.nl/"/>
+    <meta property="og:title" content="BlendBarometer - Meetinstrument voor blended onderwijs"/>
+    <meta property="og:description"
+          content="De BlendBarometer is een meetinstrument om de kwaliteit van de Blended module te meten en de kwalitatieve en harmonieuze mix van leeractiviteiten te beoordelen."/>
+    <meta property="og:image" content="https://blendbarometer.nl/images/og-thumbnail.png"/>
+
+    <meta property="twitter:card" content="summary_large_image"/>
+    <meta property="twitter:url" content="https://blendbarometer.nl/"/>
+    <meta property="twitter:title" content="BlendBarometer - Meetinstrument voor blended onderwijs"/>
+    <meta property="twitter:description"
+          content="De BlendBarometer is een meetinstrument om de kwaliteit van de Blended module te meten en de kwalitatieve en harmonieuze mix van leeractiviteiten te beoordelen."/>
+    <meta property="twitter:image" content="https://blendbarometer.nl/images/og-thumbnail.png"/>
+
+    <meta name="robots" content="index, follow">
 
     <link rel="stylesheet" href={{ URL::asset('css/global.css') }}>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
