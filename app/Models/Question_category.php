@@ -8,9 +8,12 @@ class Question_category extends Model
 {
     protected $table = "question_category";
 
+    public $timestamps = false;
+
     protected $fillable = [
         'id',
         'form_section_id',
+        'name',
         'description',
     ];
 

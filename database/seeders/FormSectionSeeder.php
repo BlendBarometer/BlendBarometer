@@ -17,11 +17,11 @@ class FormSectionSeeder extends Seeder
         $sections = [
             [
                 'content_id' => 1,
-                'description' => 'Wat is de kwaliteit van de Blend op lesniveau? Welke tools, applicaties en platformen gebruik je voor online leeractiviteiten en welke werkvormen gebruik je voor fysieke leeractiviteiten?',
+                'description' => 'Les niveau',
             ],
             [
                 'content_id' => 2,
-                'description' => '',
+                'description' => 'Module niveau',
             ],
         ];
 

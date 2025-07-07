@@ -20,26 +20,32 @@
                         'label' => 'Gegevens',
                         'name' => 'information',
                         'route' => route('information'),
-                        'sessionName' => 'name'
+                        'sessionName' => 'name',
                     ],
                     [
-                        'label' => 'Les niveau',
-                        'name' => 'lessonLevel',
+                        'label' => 'Les niveau - Fysiek',
+                        'name' => 'lessonLevelPhysical',
                         'route' => route('lesson-level', ['id' => 1]),
-                        'sessionName' => 'lessonLevelData'
+                        'sessionName' => 'lessonLevelData',
+                    ],
+                    [
+                        'label' => 'Les niveau - Online',
+                        'name' => 'lessonLevelOnline',
+                        'route' => route('lesson-level', ['id' => 7]),
+                        'sessionName' => 'lessonLevelData',
                     ],
                     [
                         'label' => 'Module niveau',
                         'name' => 'moduleLevel',
                         'route' => route('module-level', ['categoryNr' => 1]),
-                        'sessionName' => 'moduleLevelData'
+                        'sessionName' => 'moduleLevelData',
                     ],
                     [
                         'label' => 'Overzicht & Resultaten',
                         'name' => 'results',
                         'route' => route('overview-and-results-info'),
-                        'sessionName' => 'moduleLevelData'
-                    ]
+                        'sessionName' => 'moduleLevelData',
+                    ],
                 ];
                 $status = 'complete';
             @endphp
@@ -74,17 +80,15 @@
                         </div>
 
                         <div class="step-vertical-content">
-                            <h4>
+                            <strong>
                                 @if (session()->has($step['sessionName']))
-                                    <a href="{{ $step['route'] }}"
-                                       class="text-decoration-none text-dark">
+                                    <a href="{{ $step['route'] }}" class="text-decoration-none text-dark">
                                         {{ $step['label'] }}
                                     </a>
                                 @else
-
                                     {{ $step['label'] }}
                                 @endif
-                            </h4>
+                            </strong>
 
                             @if ($status == 'active')
                                 <p class="text-primary">Bezig</p>
@@ -99,8 +103,18 @@
             </div>
         </aside>
 
-        <main class="content flex-grow-1 px-5 py-4 overflow-x-hidden">
+        <main class="content min-vh-100 flex-grow-1 px-5 py-4 overflow-x-hidden d-none d-lg-block">
             {{ $slot }}
         </main>
+
+        <div class="w-100 min-vh-100 d-flex d-lg-none align-items-center justify-content-center p-4">
+            <div class="alert alert-warning" role="alert">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-exclamation-triangle-fill fs-2"></i>
+                    <h5 class="alert-heading m-0">De BlendBarometer werkt niet op mobiel of kleine schermen</h5>
+                </div>
+                Gebruik een desktop of laptop om de BlendBarometer te in te vullen.
+            </div>
+        </div>
     </div>
 </x-layout>

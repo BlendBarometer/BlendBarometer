@@ -19,7 +19,7 @@ return new class extends Migration
                 ->constrained('sub_category')
                 ->onUpdate('cascade')
                 ->onDelete('cascade');
-            $table->mediumText('description');
+            $table->mediumText('description')->nullable();
         });
     }
 

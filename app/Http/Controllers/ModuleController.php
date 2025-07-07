@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Content;
 use App\Models\Module_level_answer;
 use App\Models\Question_category;
 use App\Models\Sub_category;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Redirect;
 
 class ModuleController extends Controller
 {
@@ -20,7 +20,11 @@ class ModuleController extends Controller
 
         $answers = session()->get('moduleLevelData', []);
 
-        return view('module-level', compact('category', 'answers', 'currentStep', 'totalSteps', 'descriptions'));
+        $moduleAnswers = Module_level_answer::all();
+
+        $intermediate = Content::where('section_name', 'intermediate_module')->firstOrFail();
+        $previous = ($currentStep > 1 || $intermediate->show) ? route('module-level.previous', $currentStep) : route('lesson-level', Sub_category::count());
+        return view('module-level', compact('category', 'answers', 'currentStep', 'totalSteps', 'descriptions', 'previous', 'moduleAnswers'));
     }
 
     public function submit(Request $request, $currentStep)
@@ -28,8 +32,7 @@ class ModuleController extends Controller
         $answers = session()->get('moduleLevelData', []);
 
         foreach ($request->all() as $key => $value) {
-            if (str_starts_with($key, 'question_')) 
-            {
+            if (str_starts_with($key, 'question_')) {
                 $questionId = str_replace('question_', '', $key);
                 $answers[$currentStep][$questionId] = $value;
             }
@@ -40,16 +43,13 @@ class ModuleController extends Controller
         return redirect(route('module-level.next', $currentStep));
     }
 
-    public function next(Request $request, $currentStep)
+    public function next($currentStep)
     {
         $totalSteps = Question_category::where('form_section_id', 2)->count();
 
-        if ($currentStep >= $totalSteps) 
-        {
+        if ($currentStep >= $totalSteps) {
             return redirect(route('intermediate.view', 'resultaten'));
-        } 
-        else 
-        {
+        } else {
             return redirect(route('module-level', $currentStep + 1));
         }
     }
@@ -58,12 +58,9 @@ class ModuleController extends Controller
     {
         $this->submit($request, $currentStep);
 
-        if ($currentStep <= 1) 
-        {
+        if ($currentStep <= 1) {
             return redirect(route('intermediate.view', 'moduleniveau'));
-        } 
-        else 
-        {
+        } else {
             return redirect(route('module-level', $currentStep - 1));
         }
     }

@@ -1,4 +1,5 @@
 const customQuestionForm = document.getElementById('custom_input');
+const customQuestionBtn = document.getElementById('addCustomQuestionBtn');
 const form = document.querySelector('form');
 
 function addQuestion() {
@@ -11,12 +12,30 @@ function addQuestion() {
     const wrapper = document.createElement('div');
     wrapper.classList.add('mb-5');
 
-    // question title
-    const p = document.createElement('p');
-    p.className = 'fw-semibold';
-    p.textContent = txt;
-    wrapper.appendChild(p);
+    const headerGroup = document.createElement('div');
+    headerGroup.className = 'mb-2';
+    wrapper.appendChild(headerGroup);
 
+    // delete knop
+    const button = document.createElement('button');
+    button.className = 'btn btn-sm btn-danger me-2';
+    button.addEventListener('click', function() {
+        wrapper.remove();
+    });
+
+    // visuele prullenbak
+    const trashBin = document.createElement('i');
+    trashBin.className = 'bi bi-trash';
+    button.appendChild(trashBin);
+    headerGroup.appendChild(button);
+
+    // question title
+    const label = document.createElement('label');
+    label.htmlFor = idBase;
+    label.className = 'fw-semibold';
+    label.textContent = txt;
+    headerGroup.appendChild(label);
+    
     // options container
     const row = document.createElement('div');
     row.className = 'row gap-4 mx-0';
@@ -61,10 +80,10 @@ function addQuestion() {
         inp.value = opt.value;
         inp.required = true;
         inp.autocomplete = 'off';
-        inp.setAttribute('aria-label', opt.label);
+        inp.setAttribute('aria-label', opt.label + " - " + txt);
 
         const lbl = document.createElement('label');
-        lbl.className = 'form-check-label border-2 border rounded shadow-sm col py-4 d-flex flex-column justify-content-center align-items-center';
+        lbl.className = 'form-check-label border-2 border rounded col py-4 d-flex flex-column justify-content-center align-items-center explicit-focus-visible';
         lbl.htmlFor = inp.id;
         lbl.innerHTML = `
             <img src="/images/emoji/${opt.emoji.img}" alt="${opt.emoji.alt}" style="width: 50px; height: 50px;">
@@ -86,12 +105,20 @@ function addQuestion() {
 document.getElementById('addCustomQuestionBtn').addEventListener('click', addQuestion);
 
 let customInputSelected = false;
+
+customQuestionBtn.addEventListener("focus", () => {
+    customInputSelected = true;
+});
+customQuestionBtn.addEventListener("blur", () => {
+    customInputSelected = false;
+});
+
 customQuestionForm.addEventListener("focus", () => {
     customInputSelected = true;
-})
+});
 customQuestionForm.addEventListener("blur", () => {
     customInputSelected = false;
-})
+});
 
 addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
@@ -102,4 +129,4 @@ addEventListener("keydown", (e) => {
             form.submit();
         }
     }
-})
+});

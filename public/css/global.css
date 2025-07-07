@@ -9,8 +9,27 @@
     font-weight: bold;
 }
 
-* {
-    font-family: Poppins, sans-serif;
+@font-face {
+    font-family: OpenDyslexic;
+    src: url('../fonts/OpenDyslexic-Regular.otf');
+}
+
+@font-face {
+    font-family: OpenDyslexic;
+    src: url('../fonts/OpenDyslexic-Bold.otf');
+    font-weight: bold;
+}
+
+body {
+    --bs-body-font-family: Poppins, sans-serif;
+}
+
+body.dyslexia-mode {
+    --bs-body-font-family: OpenDyslexic, sans-serif;
+}
+
+body.dyslexia-mode .tooltip, .font-dyslexia {
+    font-family: 'OpenDyslexic', sans-serif !important;
 }
 
 .btn {
@@ -31,19 +50,19 @@
     cursor: pointer;
 }
 
-.form-check-input:focus+.form-check-label {
+.form-check-input:focus + .form-check-label {
     outline-width: 2px;
     outline-style: solid;
     outline-color: var(--bs-blue);
 }
 
-.form-check-input:checked+.form-check-label {
+.form-check-input:checked + .form-check-label {
     position: relative;
     outline: 5px solid var(--bs-primary, #0d6efd) !important;
     outline-offset: -2px;
 }
 
-.form-check-input:checked+.form-check-label::after {
+.form-check-input:checked + .form-check-label::after {
     content: "";
     background-image: url("../images/check-circle.svg");
     background-repeat: no-repeat;
@@ -56,7 +75,7 @@
     height: 30px;
 }
 
-.form-check-input:checked+.form-check-label+svg {
+.form-check-input:checked + .form-check-label + svg {
     display: block !important;
 }
 
@@ -82,4 +101,23 @@ h4,
 h5,
 h6 {
     font-weight: bold !important;
+}
+
+.tablist {
+    background-color: white;
+    gap: 0 !important;
+}
+
+.tablist .nav-link {
+    padding: .75em 1em !important;
+}
+
+.form-check-input:focus + .explicit-focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 0.5rem rgba(49, 132, 253, .5);
+}
+
+.btn-flat:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(49, 132, 253, .5) !important;
 }

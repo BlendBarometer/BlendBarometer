@@ -1,3 +1,14 @@
+let hasSavedImages = false;
+
+const physicalColor = {
+    borderColor: '#36A2EB',
+    backgroundColor: 'rgba(54,162,235,0.5)',
+};
+const onlineColor = {
+    borderColor: '#FF6384',
+    backgroundColor: 'rgba(255,99,132,0.5)',
+}
+
 const lessonLevelGraph = document.getElementById('lessonLevel');
 
 Chart.defaults.font.size = 16;
@@ -5,14 +16,19 @@ new Chart(lessonLevelGraph, {
     type: 'radar',
     data: {
         labels: lessonLevelSubcategories.map(c => c.name),
-        datasets: [{
-            label: 'Fysieke leeractiviteiten',
-            data: lessonLevelDataPhysical,
-        },
-        {
-            label: 'Online leeractiviteiten',
-            data: lessonLevelDataOnline,
-        }
+        datasets: [
+            {
+                label: 'Fysieke leeractiviteiten',
+                data: lessonLevelDataPhysical,
+                borderColor: physicalColor.borderColor,
+                backgroundColor: physicalColor.backgroundColor
+            },
+            {
+                label: 'Online leeractiviteiten',
+                data: lessonLevelDataOnline,
+                borderColor: onlineColor.borderColor,
+                backgroundColor: onlineColor.backgroundColor
+            }
         ]
     },
     options: {
@@ -24,23 +40,28 @@ new Chart(lessonLevelGraph, {
         },
         animation: {
             onComplete: function () {
-                const base64Image = this.toBase64Image();
+                const tooltip = this.tooltip;
+                const tooltipActive = tooltip && tooltip.opacity !== 0;
 
-                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                if (!tooltipActive) {
+                    const base64Image = this.toBase64Image();
 
-                // Send the image to the backend with the CSRF token
-                fetch('/SaveChart', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken,
-                    },
-                    body: JSON.stringify({ image: base64Image, name: 'radar' })
-                }).then(response => {
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-                }).catch(error => {
+                    // Send the image to the backend with the CSRF token
+                    fetch('/SaveChart', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                        },
+                        body: JSON.stringify({image: base64Image, name: 'radar'})
+                    }).then(response => {
 
-                });
+                    }).catch(error => {
+
+                    });
+                }
             }
         },
         scales: {
@@ -66,6 +87,23 @@ new Chart(lessonLevelGraph, {
     }
 });
 
+let lessonLevelAriaLabel = ""
+lessonLevelAriaLabel = "Algemene grafiek op lesniveau. Opgedeeld in fysieke leeractiviteiten en online leeractiviteiten. ";
+lessonLevelAriaLabel += "Scores op gebied van fysieke leeractiviteiten: ";
+for (let i = 0; i < lessonLevelSubcategories.length; i++) {
+    const label = lessonLevelSubcategories.map(c => c.name)[i];
+    const data = lessonLevelDataPhysical[i];
+    lessonLevelAriaLabel += label + ": " + data + ". ";
+}
+lessonLevelAriaLabel += "Scores op gebied van online leeractiviteiten: ";
+for (let i = 0; i < lessonLevelSubcategories.length; i++) {
+    const label = lessonLevelSubcategories.map(c => c.name)[i];
+    const data = lessonLevelDataOnline[i];
+
+    lessonLevelAriaLabel += label + ": " + data + ". ";
+}
+lessonLevelGraph.ariaLabel = lessonLevelAriaLabel;
+
 const lessonLevelDataAllArray = [];
 for (const [_, item] of Object.entries(lessonLevelDataAll)) {
     let section = [];
@@ -75,21 +113,26 @@ for (const [_, item] of Object.entries(lessonLevelDataAll)) {
     lessonLevelDataAllArray.push(section);
 }
 
-for (let i = 0; i < lessonLevelSubcategories.length; i++) {
-    const category = lessonLevelSubcategories[i];
-    const categoryLabels = Object.values(lessonLevelPhysicalQuestions)[i];
-    const categoryData = lessonLevelDataAllArray[i];
+for (const category of lessonLevelSubcategories) {
+    const subCatId = category.id;
+    const graph = document.getElementById('physical-' + subCatId);
+    const categoryLabels = lessonLevelPhysicalQuestions[subCatId] ? lessonLevelPhysicalQuestions[subCatId] : [];
 
-    const graph = document.getElementById('physical-' + category.id);
+    let categoryData = [];
+    if (lessonLevelDataAll && lessonLevelDataAll[subCatId]) {
+        categoryData = Object.values(lessonLevelDataAll[subCatId]).map(Number);
+    }
 
     new Chart(graph, {
         type: 'bar',
         data: {
             labels: categoryLabels,
-            datasets: [{
-                label: 'Punten gescoord',
-                data: categoryData,
-            }
+            datasets: [
+                {
+                    label: 'Punten gescoord',
+                    data: categoryData,
+                    backgroundColor: physicalColor.backgroundColor
+                }
             ]
         },
         options: {
@@ -112,35 +155,54 @@ for (let i = 0; i < lessonLevelSubcategories.length; i++) {
             },
             animation: {
                 onComplete: function () {
-                    const base64Image = this.toBase64Image();
+                    const tooltip = this.tooltip;
+                    const tooltipActive = tooltip && tooltip.opacity !== 0;
 
-                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                    if (!tooltipActive) {
+                        const base64Image = this.toBase64Image();
 
-                    // Send the image to the backend with the CSRF token
-                    fetch('/SaveChart', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': csrfToken,
-                        },
-                        body: JSON.stringify({ image: base64Image, name: 'physical' + category.name })
-                    }).then(response => {
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-                    }).catch(error => {
+                        // Send the image to the backend with the CSRF token
+                        fetch('/SaveChart', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken,
+                            },
+                            body: JSON.stringify({image: base64Image, name: 'physical' + category.name})
+                        }).then(response => {
 
-                    });
+                        }).catch(error => {
+
+                        });              
+                    }
                 }
             }
         }
     });
+    let graphAriaLabel = "Fysieke leeractiviteiten - ";
+    graphAriaLabel += category.name + ". Scores: ";
+
+    for (let i = 0; i < categoryLabels.length; i++) {
+        const label = categoryLabels[i];
+        const data = categoryData[i];
+
+        graphAriaLabel += label + ": " + data + ". ";
+    }
+
+    graph.ariaLabel = graphAriaLabel;
 }
 
-for (let i = 0; i < lessonLevelSubcategories.length; i++) {
-    const category = lessonLevelSubcategories[i];
-    const categoryLabels = Object.values(lessonLevelOnlineQuestions)[i];
-    const categoryData = lessonLevelDataAllArray[lessonLevelSubcategories.length + i];
+for (const category of lessonLevelOnlineSubcategories) {
+    const subCatId = category.id;
+    const graph = document.getElementById('online-' + subCatId);
 
-    const graph = document.getElementById('online-' + category.id);
+    const categoryLabels = lessonLevelOnlineQuestions[subCatId] ? lessonLevelOnlineQuestions[subCatId] : [];
+    let categoryData = [];
+    if (lessonLevelDataAll && lessonLevelDataAll[subCatId]) {
+        categoryData = Object.values(lessonLevelDataAll[subCatId]).map(Number);
+    }
 
     new Chart(graph, {
         type: 'bar',
@@ -149,6 +211,7 @@ for (let i = 0; i < lessonLevelSubcategories.length; i++) {
             datasets: [{
                 label: 'Punten gescoord',
                 data: categoryData,
+                backgroundColor: onlineColor.backgroundColor
             }]
         },
         options: {
@@ -171,27 +234,40 @@ for (let i = 0; i < lessonLevelSubcategories.length; i++) {
             },
             animation: {
                 onComplete: function () {
-                    const base64Image = this.toBase64Image();
+                    const tooltip = this.tooltip;
+                    const tooltipActive = tooltip && tooltip.opacity !== 0;
 
-                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                    if (!tooltipActive) {
+                        const base64Image = this.toBase64Image();
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                        fetch('/SaveChart', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken,
+                            },
+                            body: JSON.stringify({image: base64Image, name: 'online' + category.name})
+                        }).then(response => {
 
-                    // Send the image to the backend with the CSRF token
-                    fetch('/SaveChart', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': csrfToken,
-                        },
-                        body: JSON.stringify({ image: base64Image, name: 'online' + category.name })
-                    }).then(response => {
+                        }).catch(error => {
 
-                    }).catch(error => {
-
-                    });
+                        });
+                    }
                 }
             }
         }
     });
+    let graphAriaLabel = "Online leeractiviteiten - ";
+    graphAriaLabel += category.name + ". Scores: ";
+
+    for (let i = 0; i < categoryLabels.length; i++) {
+        const label = categoryLabels[i];
+        const data = categoryData[i];
+
+        graphAriaLabel += label + ": " + data + ". ";
+    }
+
+    graph.ariaLabel = graphAriaLabel;
 }
 
 const moduleLevelCategoriesGraph = document.getElementById('moduleLevelCategoriesGraph');
@@ -203,39 +279,73 @@ for (const [key, value] of Object.entries(moduleLevelCategories)) {
     outerLabels.push(key);
     outerData.push(value.length);
 }
+let removeCount = 0;
 
-const moduleLevelDataArray = [];
-for (const [_, item] of Object.entries(moduleLevelData)) {
+let j = 0;
+const moduleLevelDataArray = {};
+for (const [i, [_, item]] of Object.entries(moduleLevelData).entries()) {
+
     for (const [_, item2] of Object.entries(item)) {
-        moduleLevelDataArray.push(parseInt(item2));
+            moduleLevelDataArray[j] = parseInt(item2);
+        j++;
     }
+}
+
+let outerLabelsToRemove = [];
+let outerDataToKeep = [];
+for (i = 0; i < outerData.length; i++) {
+    if (outerData[i] == 0) {
+        outerLabelsToRemove.push(outerLabels[i]);
+    } else {
+        outerDataToKeep.push(outerData[i]);
+    }
+}
+outerData = outerDataToKeep;
+
+for (label of outerLabelsToRemove) {
+    outerLabels.splice(outerLabels.indexOf(label), 1);
+}
+
+if (!outerData.length) {
+    const noDataMessage = document.createElement('p');
+    noDataMessage.innerText = 'Geen onderdelen van toepassing.';
+    noDataMessage.className = 'me-auto';
+
+    const graphImage = document.querySelector('#moduleLevelGraphImage');
+    graphImage.className = 'd-none';
+
+    graphImage.parentElement.append(noDataMessage);
 }
 
 const moduleLevelDataGraph = document.getElementById('moduleLevelDataGraph');
 
 innerLabels = [];
-for (let i = 0; i < moduleLevelDataArray.length; i++) {
-    innerLabels.push(i + 1);
+for ([key, value] of Object.entries(moduleLevelDataArray)) {
+    innerLabels.push(parseInt(key) + 1 + ". " + moduleLevelLabels[key]);
 }
+
 innerData = [];
 innerColors = [];
-for (let i = 0; i < moduleLevelDataArray.length; i++) {
+for ([key, value] of Object.entries(moduleLevelDataArray)) {
     innerData.push(1);
     let color;
-    switch (moduleLevelDataArray[i]) {
-        case 0:
-            color = 'rgb(252, 34, 0)';
-            break;
-        case 1:
-            color = 'rgb(248, 143, 0)';
-            break;
-        case 2:
-            color = 'rgb(245, 208, 0)';
-            break;
-        case 3:
-            color = 'rgb(56, 167, 114)';
-            break;
-    }
+    switch (value) {
+    case 1:
+        color = legendColors[0];
+        break;
+    case 2:
+        color = legendColors[1];
+        break;
+    case 3:
+        color = legendColors[2];
+        break;
+    case 4:
+        color = legendColors[3];
+        break;
+    case 0:
+        color = legendColors[4];
+        break;
+}
     innerColors.push(color);
 }
 
@@ -264,6 +374,14 @@ new Chart(moduleLevelCategoriesGraph, {
                         }
                     },
                 },
+                anchor: "center", //start, center, end
+                rotation: function (ctx) {
+                    const valuesBefore = ctx.dataset.data.slice(0, ctx.dataIndex).reduce((a, b) => a + b, 0);
+                    const sum = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                    const rotation = (valuesBefore + ctx.dataset.data[ctx.dataIndex] / 2) / sum * 360;
+                    const pureDegrees = (rotation + 360) % 360;
+                    return (pureDegrees >= 90 && pureDegrees < 270) ? pureDegrees + 180 : pureDegrees;
+                },
                 formatter: function (value, context) {
                     return context.chart.data.labels[context.dataIndex];
                 }
@@ -276,24 +394,26 @@ new Chart(moduleLevelCategoriesGraph, {
         radius: '76%',
         animation: {
             onComplete: function () {
-                const base64Image = this.toBase64Image();
+                const tooltip = this.tooltip;
+                const tooltipActive = tooltip && tooltip.opacity !== 0;
 
-                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
-                // Send the image to the backend with the CSRF token
-                fetch('/SaveChart', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken,
-                    },
-                    body: JSON.stringify({ image: base64Image, name: 'wheelOutside' })
-                }).then(response => {
-                }).catch(error => {
-                });
+                if (!tooltipActive) {
+                    const base64Image = this.toBase64Image();
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                    fetch('/SaveChart', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                        },
+                        body: JSON.stringify({ image: base64Image, name: 'wheelOutside' })
+                    }).then(response => {
+                    }).catch(error => {
+                    });
+                }
             }
-        }
-    },
+        },
+    }
 });
 
 new Chart(moduleLevelDataGraph, {
@@ -320,6 +440,13 @@ new Chart(moduleLevelDataGraph, {
                         }
                     },
                 },
+                anchor: "center", //start, center, end
+                rotation: function (ctx) {
+                    const valuesBefore = ctx.dataset.data.slice(0, ctx.dataIndex).reduce((a, b) => a + b, 0);
+                    const sum = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                    const rotation = (valuesBefore + ctx.dataset.data[ctx.dataIndex] / 2) / sum * 360;
+                    return rotation < 180 ? rotation - 90 : rotation + 90;
+                },
                 formatter: function (value, context) {
                     return context.chart.data.labels[context.dataIndex];
                 }
@@ -333,25 +460,31 @@ new Chart(moduleLevelDataGraph, {
         radius: '60%',
         animation: {
             onComplete: function () {
-                const base64Image = this.toBase64Image();
+                const tooltip = this.tooltip;
+                const tooltipActive = tooltip && tooltip.opacity !== 0;
 
-                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                if (!tooltipActive) {
+                    const base64Image = this.toBase64Image();
 
-                // Send the image to the backend with the CSRF token
-                fetch('/SaveChart', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken,
-                    },
-                    body: JSON.stringify({ image: base64Image, name: 'wheelInside' })
-                }).then(response => {
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                    // Send the image to the backend with the CSRF token
+                    fetch('/SaveChart', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                        },
+                        body: JSON.stringify({image: base64Image, name: 'wheelInside'})
+                    }).then(response => {
 
-                }).catch(error => {
+                    }).catch(error => {
 
-                });
+                    });
+                }
             }
         }
     },
     plugins: [ChartDataLabels],
 });
+
+hasSavedImages = true;

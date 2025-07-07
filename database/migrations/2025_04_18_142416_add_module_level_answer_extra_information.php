@@ -12,7 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('module_level_answer', function (Blueprint $table) {
-            $table->string('answer')->primary();
+            $table->id();
+            $table->string('answer');
             $table->mediumText('description')
                 ->nullable();
         });

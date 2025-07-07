@@ -7,7 +7,7 @@
     position: absolute;
     inset: 0;
     z-index: -1;
-    background-image: linear-gradient(to right, rgb(255, 255, 255), rgba(255, 255, 255, 0)), url(../images/introduction_image.png);
+    background-image: linear-gradient(to right, rgb(255, 255, 255) 50%, rgba(255, 255, 255, 0)), url(../images/introduction_image.png);
     background-repeat: no-repeat;
     background-position: center right;
     background-size: contain;
@@ -16,4 +16,24 @@
 
 .step {
     width: 30px;
+}
+
+.description h1, h2 {
+    margin: 0 0 .5rem;
+}
+
+.description {
+    width: 50vw;
+    overflow-wrap: break-word;
+}
+
+@media screen and (max-width: 1200px) {
+    .intro::after {
+        background-image: url(../images/introduction_image.png);
+        opacity: .15;
+    }
+
+    .description {
+        width: 100% !important;
+    }
 }

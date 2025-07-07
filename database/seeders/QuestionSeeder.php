@@ -21,6 +21,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => 1,
                 'text' => 'Post-it sessie',
                 'description' => 'Ideeën verzamelen en structureren met post-its.',
+                'label' => 'Post-its',
             ],
             [
                 'id' => 2,
@@ -28,6 +29,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => 1,
                 'text' => 'Werkcollege',
                 'description' => 'Interactieve les waarin theorie direct wordt toegepast.',
+                'label' => 'Werkcollege',
             ],
             [
                 'id' => 3,
@@ -35,6 +37,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => 1,
                 'text' => 'Mindmap op flipovervel',
                 'description' => 'Visueel structureren van kennis met een mindmap.',
+                'label' => 'Mindmap',
             ],
             [
                 'id' => 4,
@@ -42,6 +45,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => 1,
                 'text' => 'Groepsopdracht',
                 'description' => 'Samenwerken aan een gezamenlijke taak.',
+                'label' => 'Groepsopdracht',
             ],
             [
                 'id' => 5,
@@ -49,6 +53,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => 2,
                 'text' => 'Informatie vergelijken',
                 'description' => 'Verschillende bronnen of perspectieven analyseren.',
+                'label' => 'Info vergelijken',
             ],
             [
                 'id' => 6,
@@ -56,6 +61,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => 2,
                 'text' => 'Expert methode (Jigsaw)',
                 'description' => 'Leren door elkaar expert te maken op deelonderwerpen.',
+                'label' => 'Jigsaw',
             ],
             [
                 'id' => 7,
@@ -63,6 +69,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => 3,
                 'text' => 'Boek/artikel/Blog lezen',
                 'description' => 'Verwerken van kennis via geschreven bronnen.',
+                'label' => 'Lezen',
             ],
             [
                 'id' => 8,
@@ -70,6 +77,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => 3,
                 'text' => 'Hoorcollege',
                 'description' => 'Docent draagt kennis over in een klassikale setting.',
+                'label' => 'Hoorcollege',
             ],
             [
                 'id' => 9,
@@ -77,6 +85,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => 4,
                 'text' => 'Peerfeedback (tweetallen)',
                 'description' => 'Studenten geven elkaar gerichte terugkoppeling.',
+                'label' => 'Peerfeedback',
             ],
             [
                 'id' => 10,
@@ -84,6 +93,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => 4,
                 'text' => 'Groepsdiscussie',
                 'description' => 'Ideeën en meningen uitwisselen in groepsverband.',
+                'label' => 'Groepsdiscussie',
             ],
             [
                 'id' => 11,
@@ -91,6 +101,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => 4,
                 'text' => 'Debat',
                 'description' => 'Tegengestelde standpunten verdedigen met argumenten.',
+                'label' => 'Debat',
             ],
             [
                 'id' => 12,
@@ -98,6 +109,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => 5,
                 'text' => 'Puzzel maken',
                 'description' => 'Leren door informatie actief te ordenen.',
+                'label' => 'Puzzel',
             ],
             [
                 'id' => 13,
@@ -105,6 +117,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => 5,
                 'text' => 'Spelvorm (memorie, kwartet)',
                 'description' => 'Leren via speelse werkvormen gericht op herhaling.',
+                'label' => 'Spelvorm',
             ],
             [
                 'id' => 14,
@@ -112,6 +125,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => 5,
                 'text' => 'Rollenspel',
                 'description' => 'Leren door in de huid van een ander te kruipen.',
+                'label' => 'Rollenspel',
             ],
             [
                 'id' => 15,
@@ -119,6 +133,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => 6,
                 'text' => '(Poster)presentatie',
                 'description' => 'Visueel en mondeling presenteren van kennis.',
+                'label' => 'Presentatie',
             ],
             [
                 'id' => 16,
@@ -126,6 +141,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => 6,
                 'text' => 'World cafe',
                 'description' => 'Gespreksvorm met wisselende tafelgroepen.',
+                'label' => 'World cafe',
             ],
             [
                 'id' => 17,
@@ -133,6 +149,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => 7,
                 'text' => 'MS Teams',
                 'description' => 'Online samenwerken en communiceren.',
+                'label' => 'Teams',
             ],
             [
                 'id' => 18,
@@ -140,6 +157,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => 7,
                 'text' => 'Whiteboard / Mural',
                 'description' => 'Digitaal brainstormen en structureren van ideeën.',
+                'label' => 'Whiteboard',
             ],
             [
                 'id' => 19,
@@ -147,6 +165,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => 7,
                 'text' => 'Brightspace',
                 'description' => 'Leeromgeving voor digitaal onderwijs en communicatie.',
+                'label' => 'Brightspace',
             ],
             [
                 'id' => 20,
@@ -154,6 +173,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => 8,
                 'text' => 'Google Scholar',
                 'description' => 'Zoeken naar wetenschappelijke bronnen.',
+                'label' => 'Scholar',
             ],
             [
                 'id' => 21,
@@ -161,13 +181,15 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => 8,
                 'text' => 'Ai tool / ChatGPT',
                 'description' => 'Ondersteuning bij schrijven, brainstormen of analyseren.',
+                'label' => 'AI tool',
             ],
             [
                 'id' => 22,
                 'question_category_id' => 2,
                 'sub_category_id' => 9,
                 'text' => 'Kennisclips',
-                'description' => 'Korte instructievideo’s over lesstof.',
+                'description' => 'Korte instructievideo\'s over lesstof.',
+                'label' => 'Kennisclips',
             ],
             [
                 'id' => 23,
@@ -175,6 +197,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => 9,
                 'text' => 'Podcast luisteren',
                 'description' => 'Leren door auditieve content.',
+                'label' => 'Podcast',
             ],
             [
                 'id' => 24,
@@ -182,6 +205,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => 9,
                 'text' => 'Interactieve video/audio/doc',
                 'description' => 'Multimediaal leren met ingebouwde interacties.',
+                'label' => 'Interactieve media',
             ],
             [
                 'id' => 25,
@@ -189,6 +213,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => 10,
                 'text' => 'Discussie fora',
                 'description' => 'Online uitwisselen van ideeën en meningen.',
+                'label' => 'Fora',
             ],
             [
                 'id' => 26,
@@ -196,6 +221,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => 10,
                 'text' => 'Peerfeedback met feedbackfruits',
                 'description' => 'Digitaal feedback geven volgens vaste structuur.',
+                'label' => 'FeedbackFruits',
             ],
             [
                 'id' => 27,
@@ -203,6 +229,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => 11,
                 'text' => 'eLearnings',
                 'description' => 'Zelfstandig leren via digitale modules.',
+                'label' => 'eLearning',
             ],
             [
                 'id' => 28,
@@ -210,6 +237,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => 11,
                 'text' => 'MyMedia quiz',
                 'description' => 'Toetsing of oefening via het MyMedia platform.',
+                'label' => 'MyMedia',
             ],
             [
                 'id' => 29,
@@ -217,6 +245,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => 11,
                 'text' => 'Wooclap quiz',
                 'description' => 'Interactieve live quiz voor kennischeck.',
+                'label' => 'Wooclap',
             ],
             [
                 'id' => 30,
@@ -224,6 +253,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => 11,
                 'text' => 'MSForms',
                 'description' => 'Enquêtes en quizzen maken en invullen.',
+                'label' => 'Forms',
             ],
             [
                 'id' => 31,
@@ -231,6 +261,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => 11,
                 'text' => 'Remindo',
                 'description' => 'Digitale toetsomgeving voor examens of oefeningen.',
+                'label' => 'Remindo',
             ],
             [
                 'id' => 32,
@@ -238,6 +269,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => 12,
                 'text' => 'Podcast maken',
                 'description' => 'Leren door zelf content te creëren.',
+                'label' => 'Podcast maken',
             ],
             [
                 'id' => 33,
@@ -245,6 +277,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => 12,
                 'text' => 'ePortfolio',
                 'description' => 'Online dossier waarin leerresultaten worden verzameld.',
+                'label' => 'ePortfolio',
             ],
             [
                 'id' => 34,
@@ -252,6 +285,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => null,
                 'text' => 'Ondersteunt de Blend de Constructive alignment?',
                 'description' => 'Leeractiviteiten afgestemd op de leeruitkomsten en de toetsing, neem je de student hierin mee?',
+                'label' => 'Alignment',
             ],
             [
                 'id' => 35,
@@ -259,6 +293,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => null,
                 'text' => 'Vind je dat de gekozen technologie bij de leeruitkomsten past?',
                 'description' => null,
+                'label' => 'Tech match',
             ],
             [
                 'id' => 36,
@@ -266,6 +301,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => null,
                 'text' => 'Is er rekening gehouden met flexibiliteit?',
                 'description' => 'Keuze voor studenten in de vorm, de tijd, de plaats.',
+                'label' => 'Flexibiliteit',
             ],
             [
                 'id' => 37,
@@ -273,6 +309,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => null,
                 'text' => 'Is er verbinding tussen de verschillende leeractiviteiten?',
                 'description' => 'Kom je terug op het voorgaande/volgt het een het ander op.',
+                'label' => 'Verbinding',
             ],
             [
                 'id' => 38,
@@ -280,6 +317,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => null,
                 'text' => 'Is er een onderbouwde keuze in synchrone en asynchrone momenten?',
                 'description' => 'Hanteer je bv de voor-tijdens-na methode/flipping the classroom.',
+                'label' => 'Sync/Async',
             ],
             [
                 'id' => 39,
@@ -287,6 +325,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => null,
                 'text' => 'Is er een goede mix van online leermomenten en fysieke bijeenkomsten?',
                 'description' => 'Is dit uitgewerkt in een Wave?',
+                'label' => 'Online/Fysiek',
             ],
             [
                 'id' => 40,
@@ -294,6 +333,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => null,
                 'text' => 'Benut je de verschillende platformen zoals Brightspace/Teams?',
                 'description' => null,
+                'label' => 'Platformen',
             ],
             [
                 'id' => 41,
@@ -301,6 +341,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => null,
                 'text' => 'Gebruik je in Brightspace het Blended Template?',
                 'description' => null,
+                'label' => 'Template',
             ],
             [
                 'id' => 42,
@@ -308,6 +349,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => null,
                 'text' => 'Is er een goede mix van werkplek leren – leren op school – thuis leren?',
                 'description' => null,
+                'label' => 'Locatie mix',
             ],
             [
                 'id' => 43,
@@ -315,6 +357,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => null,
                 'text' => 'Is er een harmonieuze mix van verschillende leeractiviteiten?',
                 'description' => 'Genoeg variatie en activerende werkvormen.',
+                'label' => 'Activiteiten mix',
             ],
             [
                 'id' => 44,
@@ -322,6 +365,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => null,
                 'text' => 'Weten zowel de docenten als de studenten hoe ze met technologie moeten werken?',
                 'description' => 'Krijgen ze instructie?',
+                'label' => 'Tech kennis',
             ],
             [
                 'id' => 45,
@@ -329,6 +373,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => null,
                 'text' => 'Worden de tools en applicaties door elke docent didactisch verantwoord ingezet?',
                 'description' => 'Bv rekening houdend met de leerfasen.',
+                'label' => 'Didactisch gebruik',
             ],
             [
                 'id' => 46,
@@ -336,6 +381,7 @@ class QuestionSeeder extends Seeder
                 'sub_category_id' => null,
                 'text' => 'Is er genoeg afwisseling van de interactie momenten?',
                 'description' => 'Variatie in docent-student / student-student / student-leermateriaal.',
+                'label' => 'Interactie mix',
             ],
         ];
 

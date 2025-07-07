@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Question extends Model
 {
+    public $timestamps = false;
+
     protected $table = "question";
 
     protected $fillable = [
@@ -13,6 +15,7 @@ class Question extends Model
         'question_category_id',
         'sub_category_id',
         'text',
+        'label',
     ];
 
     public function questionCategory()

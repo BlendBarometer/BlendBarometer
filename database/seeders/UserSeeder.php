@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Container\Attributes\Database;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
@@ -19,7 +20,8 @@ class UserSeeder extends Seeder
         User::query()->delete();
         User::factory()->create([
             'name' => 'Test User',
-            'email' => 'test@example.com',
+            'email' => 'admin@blendbarometer.nl',
+            'password' => Hash::make(env('USER_PASSWORD')),
         ]);
     }
 }

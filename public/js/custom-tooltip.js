@@ -35,8 +35,8 @@ const externalTooltipHandler = (context) => {
         while (tooltipEl.firstChild) {
             tooltipEl.firstChild.remove();
         }
-
-        const text = document.createTextNode(moduleLevelCategoriesArray[tooltip.title - 1]);
+        const titleNumber = parseInt(tooltip.title[0]);
+        const text = document.createTextNode(moduleLevelCategoriesArray[titleNumber - 1]);
         tooltipEl.appendChild(text);
     }
 

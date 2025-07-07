@@ -17,19 +17,58 @@ class AcademySeeder extends Seeder
 
         Academy::query()->delete();
         $academies = [
-            ['name' => 'Academie voor Management en Finance'],
-            ['name' => 'Academie voor Business en Entrepeneurship'],
-            ['name' => 'Academie voor Welzijn, Educatie en Gezondheid'],
-            ['name' => 'Academie voor Technologie en Innovatie'],
-            ['name' => 'Academie voor Technologie en Design'],
-            ['name' => 'Academie voor Deeltijd'],
-            ['name' => 'Academie voor Associate degrees'],
-            ['name' => 'Academie voor Duurzaam Gebouwde Omgeving'],
-            ['name' => 'Academie voor Management, Bestuur en Finance'],
-            ['name' => 'Academie voor Welzijn en Gezondheid'],
-            ['name' => 'Academie voor Waardecreatie en Ondernemerschap'],
-            ['name' => 'Avans Creative Innovation'],
-            ['name' => 'Academie voor Life Schiences en Technologie'],
+            [
+                'name' => 'Academie voor Management en Finance',
+                'abbreviation' => 'AMF'
+            ],
+            [
+                'name' => 'Academie voor Business en Entrepeneurship',
+                'abbreviation' => 'ABE'
+            ],
+            [
+                'name' => 'Academie voor Welzijn, Educatie en Gezondheid',
+                'abbreviation' => 'AWEG'
+            ],
+            [
+                'name' => 'Academie voor Technologie en Innovatie',
+                'abbreviation' => 'ATIX'
+            ],
+            [
+                'name' => 'Academie voor Technologie en Design',
+                'abbreviation' => 'ATD'
+            ],
+            [
+                'name' => 'Academie voor Deeltijd',
+                'abbreviation' => 'AVD'
+            ],
+            [
+                'name' => 'Avans Academie Associate Degrees',
+                'abbreviation' => 'AAAD'
+            ],
+            [
+                'name' => 'Academie voor Duurzaam Gebouwde Omgeving',
+                'abbreviation' => 'ADGO'
+            ],
+            [
+                'name' => 'Academie voor Management, Bestuur en Finance',
+                'abbreviation' => 'AMBF'
+            ],
+            [
+                'name' => 'Academie voor Welzijn en Gezondheid',
+                'abbreviation' => 'AWG'
+            ],
+            [
+                'name' => 'Academie voor Waardecreatie en Ondernemerschap',
+                'abbreviation' => 'AWO'
+            ],
+            [
+                'name' => 'Avans Creative Innovation',
+                'abbreviation' => 'ACI'
+            ],
+            [
+                'name' => 'Academie voor Life Sciences en Technologie',
+                'abbreviation' => 'ALST'
+            ],
         ];
 
         Academy::insert($academies);
