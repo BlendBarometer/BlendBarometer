@@ -10,7 +10,7 @@ Dit is de BlendBarometer! Een tool om te bepalen hoe "blended" je onderwijsmodul
 
 ### Stappenplan
 1. Clone de repository\
-```git clone https://github.com/DirkieDurky/BlendBarometer```
+```git clone https://github.com/BlendBarometer/BlendBarometer```
 2. Installeer de benodigde packages\
 ```composer install```\
 **Tip**: Voeg voordat je dit doet de folder van het project (of een parent folder) toe aan de "exclusions" van Windows Defender. Dat maakt "Generating optimized autoload files" veel sneller.
