@@ -105,14 +105,14 @@ class ReportController extends Controller
             ])->render();
 
             $mail->Body = $html;
-
             $mail->addAttachment($tempFile, $fileName);
-            $mail->AddEmbeddedImage(
-                public_path('images/blendbarometer-icon.png'),
-                'logoCID',
-                'logo.png'
-            );
-
+            $mail->SMTPOptions = [
+                'ssl' => [
+                    'allow_self_signed' => true,
+                    'verify_peer' => false,
+                    'verify_peer_name' => false,
+                ],
+            ];
             $mail->send();
         } catch (Exception $e) {
             return redirect()
@@ -145,7 +145,7 @@ class ReportController extends Controller
             'marginRight' => 600,
         ]);
 
-        $section->addImage(public_path('images/report-background.png'), [
+        $section->addImage('https://blendbarometer.nl/images/report-background.png', [
             'width' => 1000,
             'height' => 600,
             'positioning' => 'absolute',
@@ -160,8 +160,8 @@ class ReportController extends Controller
         $imgtable = $section->addTable();
         $imgtable->addRow();
 
-        $imgtable->addCell(20000)->addImage(public_path('images/logo-avans-white.png'), ['align' => Jc::START, 'width' => 100, 'height' => 30]);
-        $imgtable->addCell(20000)->addImage(public_path('images/report-logo.png'), ['align' => Jc::END, 'width' => 140, 'height' => 25]);
+        $imgtable->addCell(20000)->addImage('https://blendbarometer.nl/images/logo-avans-white.png', ['align' => Jc::START, 'width' => 100, 'height' => 30]);
+        $imgtable->addCell(20000)->addImage('https://blendbarometer.nl/images/report-logo.png', ['align' => Jc::END, 'width' => 140, 'height' => 25]);
 
         $section->addTextBreak(1);
 
@@ -172,7 +172,7 @@ class ReportController extends Controller
 
         $section->addTextBreak(1);
 
-        $section->addImage(public_path('images/introduction_image.png'), [
+        $section->addImage('https://blendbarometer.nl/images/introduction_image.png', [
             'alignment' => Jc::CENTER,
             'width' => 460,
             'height' => 460,
@@ -213,7 +213,7 @@ class ReportController extends Controller
             'marginRight' => 600,
         ]);
 
-        $section->addImage(public_path('images/report-background.png'), [
+        $section->addImage('https://blendbarometer.nl/images/report-background.png', [
             'width' => 1000,
             'height' => 600,
             'positioning' => 'absolute',
@@ -228,12 +228,12 @@ class ReportController extends Controller
         $imgtable = $section->addTable();
         $imgtable->addRow();
 
-        $imgtable->addCell(20000)->addImage(public_path('images/logo-avans-white.png'), ['align' => Jc::START, 'width' => 100, 'height' => 30]);
-        $imgtable->addCell(20000)->addImage(public_path('images/report-logo.png'), ['align' => Jc::END, 'width' => 140, 'height' => 25]);
+        $imgtable->addCell(20000)->addImage('https://blendbarometer.nl/images/logo-avans-white.png', ['align' => Jc::START, 'width' => 100, 'height' => 30]);
+        $imgtable->addCell(20000)->addImage('https://blendbarometer.nl/images/report-logo.png', ['align' => Jc::END, 'width' => 140, 'height' => 25]);
 
         $section->addTextBreak(3);
 
-        $section->addImage(public_path('images/introduction_image.png'), [
+        $section->addImage('https://blendbarometer.nl/images/introduction_image.png', [
             'alignment' => Jc::CENTER,
             'width' => 460,
             'height' => 460,
@@ -262,7 +262,7 @@ class ReportController extends Controller
             'lineHeight' => 1.5,
         ]);
 
-        $table->addCell(3500)->addImage(public_path('images/barometer-report.png'), [
+        $table->addCell(3500)->addImage('https://blendbarometer.nl/images/barometer-report.png', [
             'alignment' => Jc::CENTER,
             'width' => 100,
             'height' => 100,
@@ -292,7 +292,7 @@ class ReportController extends Controller
         $page->addTitle('Inhoudsopgave', 1, $this->pageNumber);
         $page->addTOC();
 
-        $page->addImage(public_path('images/barometer-report-2.png'), [
+        $page->addImage('https://blendbarometer.nl/images/barometer-report-2.png', [
             'width' => 220,
             'height' => 220,
             'alignment' => Jc::CENTER,
@@ -310,7 +310,7 @@ class ReportController extends Controller
         $page->addTitle('Resultaten', 1, $this->pageNumber);
 
         $page->addTextBox(['alignment' => Jc::CENTER, 'width' => 470, 'height' => 80, 'borderColor' => $this->NotesTextBoxColor])
-        ->addText('Notities: ..................................................................................................................');
+            ->addText('Notities: ..................................................................................................................');
         $imageRelativePathRadar = 'images/temp/radar.png';
         $imagePathRadar = Storage::disk('public')->path($imageRelativePathRadar);
 
@@ -368,8 +368,7 @@ class ReportController extends Controller
         $imageRelativePathWheelOutside = 'images/temp/wheelOutside.png';
         $imagePathWheelOutside = Storage::disk('public')->path($imageRelativePathWheelOutside);
 
-        $imageRelativePathWheelBarometerOutside = 'images/barometer-transparent.png';
-        $imagePathWheelBarometerOutside = public_path($imageRelativePathWheelBarometerOutside);
+        $imagePathWheelBarometerOutside = 'https://blendbarometer.nl/images/barometer-transparent.png';
 
         if (file_exists($imagePathWheelInside) && file_exists($imagePathWheelOutside) && file_exists($imagePathWheelBarometerOutside)) {
 
@@ -511,11 +510,11 @@ class ReportController extends Controller
         $cell2 = $table->addCell(6000);
         if ($name1Here) {
             $cell1->addTextBox(['alignment' => Jc::START, 'width' => 230, 'height' => 70, 'borderColor' => $this->NotesTextBoxColor])
-            ->addText('Notities: .........................................................');
+                ->addText('Notities: .........................................................');
         }
         if ($name2 != null) {
             $cell2->addTextBox(['alignment' => Jc::START, 'width' => 230, 'height' => 70, 'borderColor' => $this->NotesTextBoxColor])
-            ->addText('Notities: .........................................................');
+                ->addText('Notities: .........................................................');
         }
     }
 
@@ -596,7 +595,7 @@ class ReportController extends Controller
         $footerTable = $footer->addTable(['alignment' => Jc::CENTER]);
         $footerTable->addRow();
 
-        $footerTable->addCell(4000)->addImage(public_path('images/logo.png'), [
+        $footerTable->addCell(4000)->addImage('https://blendbarometer.nl/images/logo.png', [
             'width' => 90,
             'height' => 16,
             'alignment' => Jc::START,
