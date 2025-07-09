@@ -46,7 +46,7 @@ class AuthController extends Controller
     public function submitLogin(Request $request)
     {
         $request->validate([
-            'email' => ['required', 'email', 'ends_with:avans.nl'],
+            'email' => ['required', 'email', 'ends_with:@avans.nl'],
         ]);
 
         $code = str_pad(random_int(self::MIN_CODE, self::MAX_CODE), self::CODE_LENGTH, self::CODE_ZERO, STR_PAD_LEFT);
@@ -70,6 +70,7 @@ class AuthController extends Controller
             $mail->Port = env('MAIL_PORT');
             $mail->Username = env('MAIL_USERNAME');
             $mail->Password = env('MAIL_PASSWORD');
+            $mail->setFrom(env('MAIL_FROM_ADDRESS'), env('MAIL_FROM_NAME'));
 
             $html = View::make('verification-email', ['code' => $code])->render();
 
@@ -77,13 +78,6 @@ class AuthController extends Controller
             $mail->isHTML(true);
             $mail->Subject = 'Verificatiecode';
             $mail->Body = $html;
-            $mail->SMTPOptions = [
-                'ssl' => [
-                    'allow_self_signed' => true,
-                    'verify_peer' => false,
-                    'verify_peer_name' => false,
-                ],
-            ];
             $mail->send();
 
             Session::put('last_sent', now());
@@ -137,6 +131,10 @@ class AuthController extends Controller
             }
             Auth::login($user);
             Session::regenerate();
+
+            // Set a unique session identifier
+            session()->put('session_uid', uniqid());
+
             return redirect()->route('intermediate.view', 'gegevens');
         } else {
             return back()->withErrors(['code' => 'De opgegeven code komt niet overeen.']);
