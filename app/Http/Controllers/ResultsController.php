@@ -171,7 +171,8 @@ class ResultsController extends Controller
             }
 
             // Define the path where the image will be saved
-            $imagePath = 'images/temp/' . $name . '.png';
+            $uid = session()->get('session_uid');
+            $imagePath = 'images/temp/' . $uid . '_' . str_replace(' ', '-', $name) . '.png';
 
             $saved = Storage::disk('public')->put($imagePath, $imageData);
 

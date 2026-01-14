@@ -61,29 +61,30 @@ class AuthController extends Controller
             return back()->withErrors(['cooldown' => 'Wacht even voordat je opnieuw een code aanvraagt.'])->withInput();
         }
 
-        $mail = new PHPMailer(true);
-        $mail->isSMTP();
-        $mail->SMTPAuth = true;
+        try {
+            $mail = new PHPMailer(true);
+            $mail->isSMTP();
+            $mail->SMTPAuth = true;
+            $mail->Host = env('MAIL_HOST');
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port = env('MAIL_PORT');
+            $mail->Username = env('MAIL_USERNAME');
+            $mail->Password = env('MAIL_PASSWORD');
+            $mail->setFrom(env('MAIL_FROM_ADDRESS'), env('MAIL_FROM_NAME'));
 
-        $mail->Host = env('MAIL_HOST');
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port = env('MAIL_PORT');
+            $html = View::make('verification-email', ['code' => $code])->render();
 
-        $mail->Username = env('MAIL_USERNAME');
-        $mail->Password = env('MAIL_PASSWORD');
+            $mail->addAddress($request->email);
+            $mail->isHTML(true);
+            $mail->Subject = 'Verificatiecode';
+            $mail->Body = $html;
+            $mail->send();
 
-        $html = View::make('verification-email', ['code' => $code])->render();
-
-        $mail->addAddress($request->email);
-        $mail->isHTML(true);
-        $mail->Subject = 'Verificatiecode';
-
-        $mail->AddEmbeddedImage(public_path('images/logo.png'), 'logoCID', 'logo.png');
-
-        $mail->Body = $html;
-        $mail->send();
-
-        Session::put('last_sent', now());
+            Session::put('last_sent', now());
+        } catch (\Exception $e) {
+            \Log::error('Mail send failed: ' . $e->getMessage());
+            return back()->withErrors(['mail' => 'Er is een fout opgetreden bij het versturen van de e-mail. Probeer het later opnieuw.']);
+        }
 
         return redirect()->route('verify');
     }
@@ -130,6 +131,10 @@ class AuthController extends Controller
             }
             Auth::login($user);
             Session::regenerate();
+
+            // Set a unique session identifier
+            session()->put('session_uid', uniqid());
+
             return redirect()->route('intermediate.view', 'gegevens');
         } else {
             return back()->withErrors(['code' => 'De opgegeven code komt niet overeen.']);
