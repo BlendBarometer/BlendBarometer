@@ -1,0 +1,52 @@
+name: Deploy Blendbarometer
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          port: ${{ secrets.PROD_PORT }}
+          script_stop: true
+          envs: BRANCH,APP_PATH,PHP_BIN,COMPOSER_BIN,NPM_BIN,SKIP_NPM_BUILD,SKIP_MIGRATIONS
+          script: |
+            set -e
+            BRANCH="${{ github.ref_name }}"
+            APP_PATH="${{ secrets.PROD_APP_PATH }}"
+            PHP_BIN="${{ secrets.PROD_PHP_BIN }}"
+            COMPOSER_BIN="${{ secrets.PROD_COMPOSER_BIN }}"
+            NPM_BIN="${{ secrets.PROD_NPM_BIN }}"
+            SKIP_NPM_BUILD="${{ secrets.PROD_SKIP_NPM_BUILD }}"
+            SKIP_MIGRATIONS="${{ secrets.PROD_SKIP_MIGRATIONS }}"
+
+            if [ -z "$APP_PATH" ]; then
+              echo "Missing required secret PROD_APP_PATH"
+              exit 1
+            fi
+
+            if [ -z "$PHP_BIN" ]; then PHP_BIN="php"; fi
+            if [ -z "$COMPOSER_BIN" ]; then COMPOSER_BIN="composer"; fi
+            if [ -z "$NPM_BIN" ]; then NPM_BIN="npm"; fi
+            if [ -z "$SKIP_NPM_BUILD" ]; then SKIP_NPM_BUILD="0"; fi
+            if [ -z "$SKIP_MIGRATIONS" ]; then SKIP_MIGRATIONS="0"; fi
+
+            cd "$APP_PATH"
+            bash scripts/deploy.sh
