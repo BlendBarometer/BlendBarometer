@@ -4,7 +4,7 @@ use App\Http\Controllers\admin\AuthController as AdminAuthController;
 use App\Http\Controllers\admin\EditContentController;
 use App\Http\Controllers\admin\EditLessonQuestionController;
 use App\Http\Controllers\admin\EditModuleQuestionController;
-use App\Http\Controllers\admin\EmailRuleController; 
+use App\Http\Controllers\admin\EmailRuleController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ConfirmationController;
 use App\Http\Controllers\HomeController;
@@ -100,7 +100,7 @@ Route::middleware([Authenticate_admin::class])->name('admin.')->prefix('admin')-
     route::put('/vragen-bewerken/moduleniveau/antwoord-bewerken/{antwoord}/update', [EditModuleQuestionController::class, 'updateAnswer'])->name('edit-module-questions.edit-answer.update');
 
     Route::get('/content-bewerken', [EditContentController::class, 'index'])->name('edit-content');
-    
+
     Route::put('/content-bewerken/homepagina-opslaan', [EditContentController::class, 'updateHomeContent'])->name('edit-content.home-update');
 
     Route::put('/content-bewerken/grafiekomschrijving-opslaan', [EditContentController::class, 'updateChartContent'])->name('edit-content.chart-update');

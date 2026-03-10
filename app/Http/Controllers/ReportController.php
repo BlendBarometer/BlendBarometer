@@ -8,10 +8,12 @@ use App\Models\Question_category;
 use App\Models\Sub_category;
 use App\Models\EmailRule;
 use Carbon\Carbon;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Log;
 use PHPMailer\PHPMailer\Exception;
 use PHPMailer\PHPMailer\PHPMailer;
 use PhpOffice\PhpWord\IOFactory;
@@ -111,7 +113,7 @@ class ReportController extends Controller
         } catch (Exception $e) {
             $this->unlinkImages();
             session()->flush();
-            \Log::error('Report Mail send failed: ' . $e->getMessage());
+            Log::error('Report Mail send failed: ' . $e->getMessage());
 
             return redirect()
                 ->route('confirmation')

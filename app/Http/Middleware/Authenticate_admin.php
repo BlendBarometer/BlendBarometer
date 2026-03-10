@@ -20,7 +20,7 @@ class Authenticate_admin
         {
             return redirect()->route('admin.login');
         }
-        
+
         return $next($request);
     }
 }

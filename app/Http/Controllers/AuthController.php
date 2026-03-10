@@ -9,6 +9,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\View;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -82,7 +83,7 @@ class AuthController extends Controller
 
             Session::put('last_sent', now());
         } catch (\Exception $e) {
-            \Log::error('Mail send failed: ' . $e->getMessage());
+            Log::error('Mail send failed: ' . $e->getMessage());
             return back()->withErrors(['mail' => 'Er is een fout opgetreden bij het versturen van de e-mail. Probeer het later opnieuw.']);
         }
 
