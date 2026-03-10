@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Data\SessionInfo;
 use App\Models\Content;
 use App\Models\GraphDescription;
 use App\Models\Question_category;
@@ -10,7 +11,6 @@ use App\Models\EmailRule;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Log;
@@ -20,11 +20,13 @@ use PhpOffice\PhpWord\IOFactory;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\SimpleType\Jc;
 use PhpOffice\PhpWord\Style\Image;
+use PhpOffice\PhpWord\Settings;
 
 class ReportController extends Controller
 {
-
     private int $pageNumber = 0;
+    private SessionInfo $sessionInfo;
+    protected string $imageBasePath = 'https://blendbarometer.nl/images/';
 
     private $labelStyle = ['color' => '888888'];
     private $valueStyle = ['bold' => true];
@@ -36,38 +38,21 @@ class ReportController extends Controller
 
     public function sendReport()
     {
-        $phpWord = new PhpWord();
-        $phpWord->addTitleStyle(1, ['bold' => true, 'size' => 20, 'name' => 'Arial']);
-        $phpWord->addTitleStyle(2, ['bold' => true, 'size' => 15, 'name' => 'Arial']);
+        $this->sessionInfo = $this->extractSessionInfo();
 
-        $fileName = 'BlendBarometer rapport ' . session('module') . ' ' . now()->format('d-m-Y') . '.docx';
+        ['tempFile' => $tempFile, 'fileName' => $fileName] = $this->generateReport();
 
-        $this->addFrontPage($phpWord);
-        $this->addTableOfContents($phpWord);
-        $this->addInformationPage($phpWord);
-        $this->addResults($phpWord);
-        $this->addFillableNotes($phpWord);
-        $this->addEndPage($phpWord);
-
-        $writer = IOFactory::createWriter($phpWord);
-        $tempFile = tempnam(sys_get_temp_dir(), $fileName);
-        $writer->save($tempFile);
-
-        $academy = session('academy');
+        $academy = $this->sessionInfo->academy;
 
         $specific = EmailRule::query()
             ->where('academy_name', $academy)
             ->pluck('email');
 
-        if ($specific->isNotEmpty()) {
-            $recipients = $specific->unique()->values();
-        } else {
-            $recipients = EmailRule::query()
-                ->whereNull('academy_name')
-                ->pluck('email')
-                ->unique()
-                ->values();
-        }
+        $recipients = ($specific->isNotEmpty()) ? $specific->unique()->values() : EmailRule::query()
+            ->whereNull('academy_name')
+            ->pluck('email')
+            ->unique()
+            ->values();
 
         if ($recipients->isEmpty()) {
             throw ValidationException::withMessages([
@@ -88,23 +73,23 @@ class ReportController extends Controller
             $mail->CharSet = 'UTF-8';
             $mail->isHTML(true);
             $mail->Subject = 'Resultaten BlendBarometer';
-            $name = session('name');
-            $academy = session('academy');
-            $module = session('module');
+            $name = $this->sessionInfo->name;
+            $academy = $this->sessionInfo->academy;
+            $module = $this->sessionInfo->module;
             $date = now()->format('d-m-Y');
-            $course = session('course');
+            $course = $this->sessionInfo->course;
 
             foreach ($recipients as $address) {
                 $mail->addAddress($address);
             }
 
             $html = View::make('intermediate-report-email', [
-                'name' => session('name'),
-                'emailParticipant' => session('email'),
+                'name' => $this->sessionInfo->name,
+                'emailParticipant' => $this->sessionInfo->email,
                 'academy' => $academy,
-                'module' => session('module'),
+                'module' => $this->sessionInfo->module,
                 'date' => now()->format('d-m-Y'),
-                'summary' => session('summary'),
+                'summary' => $this->sessionInfo->summary,
             ])->render();
 
             $mail->Body = $html;
@@ -133,9 +118,54 @@ class ReportController extends Controller
         ]);
     }
 
+    private function generateReport(): array
+    {
+        $phpWord = new PhpWord();
+        Settings::setOutputEscapingEnabled(true);
+        $phpWord->addTitleStyle(1, ['bold' => true, 'size' => 20, 'name' => 'Arial']);
+        $phpWord->addTitleStyle(2, ['bold' => true, 'size' => 15, 'name' => 'Arial']);
+
+        $fileName = 'BlendBarometer rapport ' . $this->sessionInfo->module . ' ' . now()->format('d-m-Y') . '.docx';
+
+        $this->composeReportSections($phpWord);
+
+        $writer = IOFactory::createWriter($phpWord);
+        $tempFile = tempnam(sys_get_temp_dir(), $fileName);
+        $writer->save($tempFile);
+
+        return [
+            'tempFile' => $tempFile,
+            'fileName' => $fileName,
+        ];
+    }
+
+    protected function composeReportSections(PhpWord $phpWord): void
+    {
+        $this->addFrontPage($phpWord);
+        $this->addTableOfContents($phpWord);
+        $this->addInformationPage($phpWord);
+        $this->addResults($phpWord);
+        $this->addFillableNotes($phpWord);
+        $this->addEndPage($phpWord);
+    }
+
+    private function extractSessionInfo(): SessionInfo
+    {
+        return new SessionInfo(
+            name: session('name'),
+            email: session('email'),
+            academy: session('academy'),
+            academyAbbreviation: session('academy-abbreviation'),
+            module: session('module'),
+            course: session('course'),
+            summary: session('summary'),
+            sessionUid: session('session_uid'),
+        );
+    }
+
     private function addFrontPage($phpWord)
     {
-        $titleFontSize = strlen(session('module')) > 30 ? 28 : 35;
+        $titleFontSize = strlen($this->sessionInfo->module) > 30 ? 28 : 35;
 
         $this->pageNumber += 1;
         $section = $phpWord->addSection([
@@ -145,7 +175,7 @@ class ReportController extends Controller
             'marginRight' => 600,
         ]);
 
-        $section->addImage('https://blendbarometer.nl/images/report-background.png', [
+        $section->addImage("{$this->imageBasePath}report-background.png", [
             'width' => 1000,
             'height' => 600,
             'positioning' => 'absolute',
@@ -160,19 +190,19 @@ class ReportController extends Controller
         $imgtable = $section->addTable();
         $imgtable->addRow();
 
-        $imgtable->addCell(20000)->addImage('https://blendbarometer.nl/images/logo-avans-white.png', ['align' => Jc::START, 'width' => 100, 'height' => 30]);
-        $imgtable->addCell(20000)->addImage('https://blendbarometer.nl/images/report-logo.png', ['align' => Jc::END, 'width' => 140, 'height' => 25]);
+        $imgtable->addCell(20000)->addImage("{$this->imageBasePath}logo-avans-white.png", ['align' => Jc::START, 'width' => 100, 'height' => 30]);
+        $imgtable->addCell(20000)->addImage("{$this->imageBasePath}report-logo.png", ['align' => Jc::END, 'width' => 140, 'height' => 25]);
 
         $section->addTextBreak(1);
 
         $month = Carbon::now()->locale('nl')->isoFormat('MMMM YYYY');
 
-        $section->addText('Tussenrapport - ' . session('module'), ['size' => $titleFontSize, 'bold' => true, 'color' => 'white'], ['alignment' => Jc::CENTER]);
-        $section->addText('Blended Learning • ' . $month, ['size' => 15, 'color' => 'white'], ['alignment' => Jc::CENTER]);
+        $section->addText("Tussenrapport - {$this->sessionInfo->module}", ['size' => $titleFontSize, 'bold' => true, 'color' => 'white'], ['alignment' => Jc::CENTER]);
+        $section->addText("Blended Learning • $month", ['size' => 15, 'color' => 'white'], ['alignment' => Jc::CENTER]);
 
         $section->addTextBreak(1);
 
-        $section->addImage('https://blendbarometer.nl/images/introduction_image.png', [
+        $section->addImage("{$this->imageBasePath}introduction_image.png", [
             'alignment' => Jc::CENTER,
             'width' => 460,
             'height' => 460,
@@ -184,21 +214,21 @@ class ReportController extends Controller
 
         $infotable->addRow();
         $infotable->addCell($this->labelWidth)->addText('Academie', $this->labelStyle);
-        $infotable->addCell($this->valueWidth)->addText(session('academy-abbreviation'), $this->valueStyle);
+        $infotable->addCell($this->valueWidth)->addText($this->sessionInfo->academyAbbreviation, $this->valueStyle);
         $infotable->addCell($this->paddingWidth);
         $infotable->addCell($this->labelWidth)->addText('Docent', $this->labelStyle);
-        $infotable->addCell($this->valueWidth)->addText(session('name'), $this->valueStyle);
+        $infotable->addCell($this->valueWidth)->addText($this->sessionInfo->name, $this->valueStyle);
 
         $infotable->addRow();
         $infotable->addCell($this->labelWidth)->addText('Opleiding', $this->labelStyle);
-        $infotable->addCell($this->valueWidth)->addText(session('course'), $this->valueStyle);
+        $infotable->addCell($this->valueWidth)->addText($this->sessionInfo->course, $this->valueStyle);
         $infotable->addCell($this->paddingWidth);
         $infotable->addCell($this->labelWidth)->addText('ICTO Coach', $this->labelStyle);
-        $infotable->addCell($this->valueWidth)->addText('&lt;vul hier in&gt;', $this->valueStyle);
+        $infotable->addCell($this->valueWidth)->addText('vul hier in', $this->valueStyle);
 
         $infotable->addRow();
         $infotable->addCell($this->labelWidth)->addText('Module', $this->labelStyle);
-        $infotable->addCell($this->valueWidth)->addText(session('module'), $this->valueStyle);
+        $infotable->addCell($this->valueWidth)->addText($this->sessionInfo->module, $this->valueStyle);
         $infotable->addCell($this->paddingWidth);
         $infotable->addCell($this->labelWidth)->addText('Datum', $this->labelStyle);
         $infotable->addCell($this->valueWidth)->addText(now()->format('d-m-Y'), $this->valueStyle);
@@ -213,7 +243,7 @@ class ReportController extends Controller
             'marginRight' => 600,
         ]);
 
-        $section->addImage('https://blendbarometer.nl/images/report-background.png', [
+        $section->addImage("{$this->imageBasePath}report-background.png", [
             'width' => 1000,
             'height' => 600,
             'positioning' => 'absolute',
@@ -228,12 +258,12 @@ class ReportController extends Controller
         $imgtable = $section->addTable();
         $imgtable->addRow();
 
-        $imgtable->addCell(20000)->addImage('https://blendbarometer.nl/images/logo-avans-white.png', ['align' => Jc::START, 'width' => 100, 'height' => 30]);
-        $imgtable->addCell(20000)->addImage('https://blendbarometer.nl/images/report-logo.png', ['align' => Jc::END, 'width' => 140, 'height' => 25]);
+        $imgtable->addCell(20000)->addImage("{$this->imageBasePath}logo-avans-white.png", ['align' => Jc::START, 'width' => 100, 'height' => 30]);
+        $imgtable->addCell(20000)->addImage("{$this->imageBasePath}report-logo.png", ['align' => Jc::END, 'width' => 140, 'height' => 25]);
 
         $section->addTextBreak(3);
 
-        $section->addImage('https://blendbarometer.nl/images/introduction_image.png', [
+        $section->addImage("{$this->imageBasePath}introduction_image.png", [
             'alignment' => Jc::CENTER,
             'width' => 460,
             'height' => 460,
@@ -262,15 +292,15 @@ class ReportController extends Controller
             'lineHeight' => 1.5,
         ]);
 
-        $table->addCell(3500)->addImage('https://blendbarometer.nl/images/barometer-report.png', [
+        $table->addCell(3500)->addImage("{$this->imageBasePath}barometer-report.png", [
             'alignment' => Jc::CENTER,
             'width' => 100,
             'height' => 100,
         ]);
 
         $page->addTitle('Over module', 1, $this->pageNumber);
-        $date = now()->translatedFormat('j F Y');
-        $moduleText = sprintf("Op %s heeft %s de barometer ingevuld voor de module %s van opleiding %s aan de %s.", Carbon::now()->locale('nl')->isoFormat('DD MMMM YYYY'), session('name'), session('module'), session('course'), session('academy'));
+        $date = Carbon::now()->locale('nl')->isoFormat('DD MMMM YYYY');
+        $moduleText = "Op {$date} heeft {$this->sessionInfo->name} de barometer ingevuld voor de module {$this->sessionInfo->module} van opleiding {$this->sessionInfo->course} aan de {$this->sessionInfo->academy}.";
         $page->addText($moduleText, [
             'color' => '888888',
             'lineHeight' => 1.5,
@@ -278,7 +308,7 @@ class ReportController extends Controller
 
         $page->addTitle('Samenvatting module', 2, $this->pageNumber);
 
-        $page->addText(session('summary'), [
+        $page->addText($this->sessionInfo->summary, [
             'color' => '888888',
             'lineHeight' => 1.5,
         ]);
@@ -292,7 +322,7 @@ class ReportController extends Controller
         $page->addTitle('Inhoudsopgave', 1, $this->pageNumber);
         $page->addTOC();
 
-        $page->addImage('https://blendbarometer.nl/images/barometer-report-2.png', [
+        $page->addImage("{$this->imageBasePath}barometer-report-2.png", [
             'width' => 220,
             'height' => 220,
             'alignment' => Jc::CENTER,
@@ -312,8 +342,8 @@ class ReportController extends Controller
         $page->addTextBox(['alignment' => Jc::CENTER, 'width' => 470, 'height' => 80, 'borderColor' => $this->NotesTextBoxColor])
             ->addText('Notities:');
 
-        $tempId = session('session_uid');
-        $imageRelativePathRadar = 'images/temp/'. $tempId . '_radar.png';
+        $tempId = $this->sessionInfo->sessionUid;
+        $imageRelativePathRadar = "images/temp/{$tempId}_radar.png";
         $imagePathRadar = Storage::disk('public')->path($imageRelativePathRadar);
 
         if (file_exists($imagePathRadar)) {
@@ -364,105 +394,99 @@ class ReportController extends Controller
 
         $page = $this->createPage($phpWord);
 
-        $tempId = session('session_uid');
-        $imageRelativePathWheelInside = 'images/temp/'. $tempId . '_wheelInside.png';
+        $tempId = $this->sessionInfo->sessionUid;
+        $imageRelativePathWheelInside = "images/temp/{$tempId}_wheelInside.png";
         $imagePathWheelInside = Storage::disk('public')->path($imageRelativePathWheelInside);
 
-        $imageRelativePathWheelOutside = 'images/temp/'. $tempId .'_wheelOutside.png';
+        $imageRelativePathWheelOutside = "images/temp/{$tempId}_wheelOutside.png";
         $imagePathWheelOutside = Storage::disk('public')->path($imageRelativePathWheelOutside);
 
-        $imagePathWheelBarometerOutside = 'https://blendbarometer.nl/images/barometer-transparent.png';
+        $imagePathWheelBarometerOutside = "{$this->imageBasePath}barometer-transparent.png";
 
-        if (file_exists($imagePathWheelInside) && file_exists($imagePathWheelOutside)) {
-
-            $foreground = imagecreatefrompng($imagePathWheelInside);
-            $background = imagecreatefrompng($imagePathWheelOutside);
-            $border = imagecreatefrompng($imagePathWheelBarometerOutside);
-
-            $bgWidth = imagesx($background);
-            $bgHeight = imagesy($background);
-
-            $finalImage = imagecreatetruecolor($bgWidth, $bgHeight);
-            $white = imagecolorallocate($finalImage, 255, 255, 255);
-            imagefill($finalImage, 0, 0, $white);
-
-            imagealphablending($finalImage, true);
-
-            imagecopy($finalImage, $background, 0, 0, 0, 0, $bgWidth, $bgHeight);
-
-            $foregroundWidth = imagesx($foreground);
-            $foregroundHeight = imagesy($foreground);
-            $foregroundX = ($bgWidth - $foregroundWidth) / 2;
-            $foregroundY = ($bgHeight - $foregroundHeight) / 2;
-            imagecopy($finalImage, $foreground, $foregroundX, $foregroundY, 0, 0, $foregroundWidth, $foregroundHeight);
-
-            $borderWidth = imagesx($border);
-            $borderHeight = imagesy($border);
-            $scaledBorder = imagecreatetruecolor($bgWidth, $bgHeight);
-            imagealphablending($scaledBorder, false);
-            imagesavealpha($scaledBorder, true);
-            imagecopyresampled($scaledBorder, $border, 0, 0, 0, 0, $bgWidth, $bgHeight, $borderWidth, $borderHeight);
-
-            imagecopy($finalImage, $scaledBorder, 0, 0, 0, 0, $bgWidth, $bgHeight);
-
-            $combinedPath = Storage::disk('public')->path('images/temp/'. $tempId .'_combined_with_white_background.png');
-            imagepng($finalImage, $combinedPath);
-
-            imagedestroy($foreground);
-            imagedestroy($background);
-            imagedestroy($border);
-            imagedestroy($scaledBorder);
-            imagedestroy($finalImage);
-
-            $page->addImage($combinedPath, [
-                'width' => 350,
-                'height' => 350,
-                'alignment' => Jc::CENTER,
-            ]);
-
-            $legendItems = \App\Models\Graph_legenda::all();
-            if ($legendItems->count() > 0) {
-                $colorLegend = $page->addTable();
-                foreach ($legendItems as $item) {
-                    $colorLegend->addRow();
-                    $colorLegend->addCell(2000)->addText($item->name, ['bgColor' => ltrim($item->color, '#')]);
-                    $colorLegend->addCell(4000)->addText($item->description, $this->valueStyle);
-                }
-            }
-
-            $page->addText('Moduleniveau', ['alignment' => Jc::START, 'bold' => true, 'size' => 13]);
-            $page->addText($moduleLevelGeneralDescription[0]);
-
-
-            $items = Question_category::join('question', 'question_category.id', '=', 'question.question_category_id')
-                ->select('question.text')
-                ->whereIn('question.question_category_id', [3, 4, 5])
-                ->pluck('question.text')
-                ->all();
-
-            $page->addText('Legenda', ['alignment' => Jc::START, 'bold' => true, 'size' => 13]);
-            $legend = $page->addTable();
-
-            $legend = $page->addTable();
-
-            for ($j = 0; $j < count($items); $j += 2) {
-                $legend->addRow();
-
-                $legend->addCell(300)->addText((string)$j + 1, $this->labelStyle);
-                $legend->addCell(4000)->addText($this->sanitizeText($items[$j]), $this->valueStyle);
-
-                $legend->addCell($this->paddingWidth)->addText('', []);
-
-                if (isset($items[$j + 1])) {
-                    $legend->addCell(300)->addText((string)$j + 2, $this->labelStyle);
-                    $legend->addCell(4000)->addText($this->sanitizeText($items[$j + 1]), $this->valueStyle);
-                } else {
-                    $legend->addCell(200)->addText('', $this->labelStyle);
-                    $legend->addCell(5000)->addText('', $this->valueStyle);
-                }
-            }
-        } else {
+        if (!file_exists($imagePathWheelInside) || !file_exists($imagePathWheelOutside)) {
             $page->addText('Grafiek niet gevonden.');
+            return;
+        }
+
+        $foreground = imagecreatefrompng($imagePathWheelInside);
+        $background = imagecreatefrompng($imagePathWheelOutside);
+        $border = imagecreatefrompng($imagePathWheelBarometerOutside);
+
+        $bgWidth = imagesx($background);
+        $bgHeight = imagesy($background);
+
+        $finalImage = imagecreatetruecolor($bgWidth, $bgHeight);
+        $white = imagecolorallocate($finalImage, 255, 255, 255);
+        imagefill($finalImage, 0, 0, $white);
+
+        imagealphablending($finalImage, true);
+
+        imagecopy($finalImage, $background, 0, 0, 0, 0, $bgWidth, $bgHeight);
+
+        $foregroundWidth = imagesx($foreground);
+        $foregroundHeight = imagesy($foreground);
+        $foregroundX = ($bgWidth - $foregroundWidth) / 2;
+        $foregroundY = ($bgHeight - $foregroundHeight) / 2;
+        imagecopy($finalImage, $foreground, $foregroundX, $foregroundY, 0, 0, $foregroundWidth, $foregroundHeight);
+
+        $borderWidth = imagesx($border);
+        $borderHeight = imagesy($border);
+        $scaledBorder = imagecreatetruecolor($bgWidth, $bgHeight);
+        imagealphablending($scaledBorder, false);
+        imagesavealpha($scaledBorder, true);
+        imagecopyresampled($scaledBorder, $border, 0, 0, 0, 0, $bgWidth, $bgHeight, $borderWidth, $borderHeight);
+
+        imagecopy($finalImage, $scaledBorder, 0, 0, 0, 0, $bgWidth, $bgHeight);
+
+        $combinedPath = Storage::disk('public')->path("images/temp/{$tempId}_combined_with_white_background.png");
+        imagepng($finalImage, $combinedPath);
+
+        $page->addImage($combinedPath, [
+            'width' => 350,
+            'height' => 350,
+            'alignment' => Jc::CENTER,
+        ]);
+
+        $legendItems = \App\Models\Graph_legenda::all();
+        if ($legendItems->count() > 0) {
+            $colorLegend = $page->addTable();
+            foreach ($legendItems as $item) {
+                $colorLegend->addRow();
+                $colorLegend->addCell(2000)->addText($item->name, ['bgColor' => ltrim($item->color, '#')]);
+                $colorLegend->addCell(4000)->addText($item->description, $this->valueStyle);
+            }
+        }
+
+        $page->addText('Moduleniveau', ['alignment' => Jc::START, 'bold' => true, 'size' => 13]);
+        $page->addText($moduleLevelGeneralDescription[0]);
+
+
+        $items = Question_category::join('question', 'question_category.id', '=', 'question.question_category_id')
+            ->select('question.text')
+            ->whereIn('question.question_category_id', [3, 4, 5])
+            ->pluck('question.text')
+            ->all();
+
+        $page->addText('Legenda', ['alignment' => Jc::START, 'bold' => true, 'size' => 13]);
+        $legend = $page->addTable();
+
+        $legend = $page->addTable();
+
+        for ($j = 0; $j < count($items); $j += 2) {
+            $legend->addRow();
+
+            $legend->addCell(300)->addText((string)$j + 1, $this->labelStyle);
+            $legend->addCell(4000)->addText($this->sanitizeText($items[$j]), $this->valueStyle);
+
+            $legend->addCell($this->paddingWidth)->addText('', []);
+
+            if (isset($items[$j + 1])) {
+                $legend->addCell(300)->addText((string)$j + 2, $this->labelStyle);
+                $legend->addCell(4000)->addText($this->sanitizeText($items[$j + 1]), $this->valueStyle);
+            } else {
+                $legend->addCell(200)->addText('', $this->labelStyle);
+                $legend->addCell(5000)->addText('', $this->valueStyle);
+            }
         }
     }
 
@@ -478,11 +502,11 @@ class ReportController extends Controller
         $name1Here = $name1 != null;
         $name2Here = $name2 != null;
 
-        $tempId = session('session_uid');
-        $imageRelativePath1 = 'images/temp/' . $tempId . '_physical' . $name1 . '.png';
+        $tempId = $this->sessionInfo->sessionUid;
+        $imageRelativePath1 = "images/temp/{$tempId}_physical{$name1}.png";
         $imagePath1 = Storage::disk('public')->path($imageRelativePath1);
 
-        $imageRelativePath2 = 'images/temp/' . $tempId . '_online' . $name2 . '.png';
+        $imageRelativePath2 = "images/temp/{$tempId}_online{$name2}.png";
         $imagePath2 = Storage::disk('public')->path($imageRelativePath2);
 
         $table->addRow();
@@ -530,18 +554,18 @@ class ReportController extends Controller
         $page->addTitle('Verslag gesprek', 1, $this->pageNumber);
         $textrun = $page->addTextRun();
         $textrun->addText('Docent: ', $this->labelStyle);
-        $textrun->addText('&lt;vul hier in&gt;', $this->valueStyle);
+        $textrun->addText('vul hier in', $this->valueStyle);
 
         $textrun = $page->addTextRun();
         $textrun->addText('Icto Coach: ', $this->labelStyle);
-        $textrun->addText('&lt;vul hier in&gt;', $this->valueStyle);
+        $textrun->addText('vul hier in', $this->valueStyle);
 
         $textrun = $page->addTextRun();
         $textrun->addText('Datum gesprek: ', $this->labelStyle);
-        $textrun->addText('&lt;vul hier in&gt;', $this->valueStyle);
+        $textrun->addText('vul hier in', $this->valueStyle);
 
         $page->addTitle('Verslag', 2, $this->pageNumber);
-        $page->addText('&lt;vul hier in&gt;');
+        $page->addText('vul hier in');
 
         $page = $this->createPage($phpWord);
         $this->addStandardHeaderFooter($page);
@@ -549,10 +573,10 @@ class ReportController extends Controller
         $page->addTitle('Advies en Actiepunten', 1, $this->pageNumber);
 
         $page->addTitle('Advies', 2, $this->pageNumber);
-        $page->addText('&lt;vul hier in&gt;');
+        $page->addText('vul hier in');
 
         $page->addTitle('Actiepunten', 2, $this->pageNumber);
-        $page->addText('&lt;vul hier in&gt;');
+        $page->addText('vul hier in');
     }
 
     private function createPage($phpWord)
@@ -566,7 +590,7 @@ class ReportController extends Controller
         ]);
     }
 
-    function addStandardHeaderFooter($section)
+    private function addStandardHeaderFooter($section)
     {
         // --- Header ---
         $header = $section->addHeader();
@@ -580,26 +604,23 @@ class ReportController extends Controller
             'size' => 10,
         ];
 
-        $table->addCell(5500)->addText('Blended Learning Rapport', array_merge($headerTextStyle, [
-            'color' => '888888',
-        ]), [
+        $table->addCell(5500)->addText('Blended Learning Rapport', [...$headerTextStyle, 'color' => '888888'], [
             'alignment' => Jc::START,
         ]);
 
-        $table->addCell(5500)->addText(session('academy-abbreviation') . ' - ' . session('course') . ' - ' . session('module'), array_merge($headerTextStyle, [
+        $table->addCell(5500)->addText("{$this->sessionInfo->academyAbbreviation} - {$this->sessionInfo->course} - {$this->sessionInfo->module}", [
+            ...$headerTextStyle,
             'color' => '888888',
-            'bold' => true,
-        ]), [
-            'alignment' => Jc::END,
-        ]);
-
+            'bold' => true],
+            ['alignment' => Jc::END,]
+        );
 
         // --- FOOTER ---
         $footer = $section->addFooter();
         $footerTable = $footer->addTable(['alignment' => Jc::CENTER]);
         $footerTable->addRow();
 
-        $footerTable->addCell(4000)->addImage('https://blendbarometer.nl/images/logo.png', [
+        $footerTable->addCell(4000)->addImage("{$this->imageBasePath}logo.png", [
             'width' => 90,
             'height' => 16,
             'alignment' => Jc::START,
@@ -619,29 +640,29 @@ class ReportController extends Controller
         ]);
     }
 
-    function unlinkImages()
+    private function unlinkImages()
     {
         $folderPath = storage_path('app/public/images/temp');
+        if (!File::exists($folderPath)) {
+            return;
+        }
 
-        if (File::exists($folderPath)) {
-            $files = File::files($folderPath);
-
-            foreach ($files as $file) {
-                File::delete($file);
-            }
+        $files = File::files($folderPath);
+        foreach ($files as $file) {
+            File::delete($file);
         }
     }
 
-    function addGraph($imagePath, $cell)
+    private function addGraph($imagePath, $cell)
     {
-        if (file_exists($imagePath)) {
-            $cell->addImage($imagePath, [
-                'width' => 245,
-                'height' => 160,
-                'alignment' => Jc::START,
-            ]);
-        } else {
+        if (!file_exists($imagePath)) {
             $cell->addText('Grafiek niet gevonden.');
+            return;
         }
+        $cell->addImage($imagePath, [
+            'width' => 245,
+            'height' => 160,
+            'alignment' => Jc::START,
+        ]);
     }
 }
