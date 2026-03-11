@@ -165,7 +165,7 @@ class ReportControllerGenerateReportTest extends TestCase
         Storage::disk('public')->deleteDirectory('images/temp');
     }
 
-    private function invokeGenerateReport(): array
+    private function invokeGenerateReport(?SessionInfo $sessionInfo = null): array
     {
         $imageDir = $this->fixtureImageDir;
         $controller = new class($imageDir) extends ReportController {
@@ -178,11 +178,27 @@ class ReportControllerGenerateReportTest extends TestCase
         $reflection = new ReflectionClass(ReportController::class);
 
         $sessionInfoProperty = $reflection->getProperty('sessionInfo');
-        $sessionInfoProperty->setValue($controller, $this->createSessionInfo());
+        $sessionInfoProperty->setValue($controller, $sessionInfo ?? $this->createSessionInfo());
 
         $method = $reflection->getMethod('generateReport');
 
         return $method->invoke($controller);
+    }
+
+    private function assertDocxIntegrity(string $tempFile): void
+    {
+        $zip = new \ZipArchive();
+        $this->assertTrue($zip->open($tempFile) === true, 'DOCX should be a valid zip archive.');
+        $this->assertNotFalse($zip->locateName('[Content_Types].xml'));
+        $this->assertNotFalse($zip->locateName('_rels/.rels'));
+        $this->assertNotFalse($zip->locateName('word/document.xml'));
+
+        $xml = $zip->getFromName('word/document.xml');
+        $zip->close();
+
+        $this->assertNotFalse($xml);
+        $this->assertNotSame('', trim($xml));
+        $this->assertNotFalse(simplexml_load_string($xml));
     }
 
     private function readDocumentXml(string $tempFile): string
@@ -211,6 +227,8 @@ class ReportControllerGenerateReportTest extends TestCase
             $this->assertFileExists($result['tempFile']);
             $this->assertStringStartsWith('BlendBarometer rapport Test Module ', $result['fileName']);
             $this->assertStringEndsWith('.docx', $result['fileName']);
+
+            $this->assertDocxIntegrity($result['tempFile']);
 
             $xml = $this->readDocumentXml($result['tempFile']);
 
@@ -245,8 +263,12 @@ class ReportControllerGenerateReportTest extends TestCase
 
             $target = storage_path('app/testing/last-integration-report.docx');
             @mkdir(dirname($target), 0777, true);
-            copy($result['tempFile'], $target);
-            fwrite(STDOUT, PHP_EOL . 'Saved report to: ' . $target . PHP_EOL);
+            @unlink($target);
+            if (@copy($result['tempFile'], $target)) {
+                fwrite(STDOUT, PHP_EOL . 'Saved report to: ' . $target . PHP_EOL);
+            } else {
+                fwrite(STDOUT, PHP_EOL . 'Could not save report artifact to: ' . $target . PHP_EOL);
+            }
 
             @unlink($result['tempFile']);
         } finally {
@@ -265,6 +287,7 @@ class ReportControllerGenerateReportTest extends TestCase
             $result = $this->invokeGenerateReport();
 
             $this->assertFileExists($result['tempFile']);
+            $this->assertDocxIntegrity($result['tempFile']);
 
             $xml = $this->readDocumentXml($result['tempFile']);
 
@@ -277,6 +300,50 @@ class ReportControllerGenerateReportTest extends TestCase
 
             @unlink($result['tempFile']);
         } finally {
+            $this->cleanupStaticFixtureImages();
+        }
+    }
+
+    public function test_generate_report_with_complex_input_data_produces_valid_docx(): void
+    {
+        $this->seedDatabase();
+        $this->createStaticFixtureImages();
+        $this->createFixtureImages();
+
+        $complexSessionInfo = new SessionInfo(
+            name: "Docent 😀\n\r" . chr(1) . chr(2),
+            email: 'complex.teacher+qa@example.com',
+            academy: 'Academie <Test> & Partners',
+            academyAbbreviation: 'A&T',
+            module: 'Module: QA/Stress *Test*',
+            course: "Course met unicode Ω en emoji 🚀",
+            summary: "Samenvatting met lastige tekens: <tag * & \"quotes\' \` en control" . chr(7) . "\nNieuwe regel",
+            sessionUid: self::SESSION_UID,
+        );
+
+        try {
+            $result = $this->invokeGenerateReport($complexSessionInfo);
+
+            $this->assertFileExists($result['tempFile']);
+            $this->assertDocxIntegrity($result['tempFile']);
+            $this->assertStringNotContainsString(':', $result['fileName']);
+            $this->assertStringNotContainsString('/', $result['fileName']);
+            $this->assertStringNotContainsString('*', $result['fileName']);
+
+            $xml = $this->readDocumentXml($result['tempFile']);
+            $this->assertStringContainsString('Academie', $xml);
+            $this->assertStringContainsString('Resultaten', $xml);
+
+            $target = storage_path('app/testing/last-complex-report.docx');
+            @mkdir(dirname($target), 0777, true);
+            @unlink($target);
+            if (@copy($result['tempFile'], $target)) {
+                fwrite(STDOUT, PHP_EOL . 'Saved report to: ' . $target . PHP_EOL);
+            } else {
+                fwrite(STDOUT, PHP_EOL . 'Could not save report artifact to: ' . $target . PHP_EOL);
+            }
+        } finally {
+            $this->cleanupFixtureImages();
             $this->cleanupStaticFixtureImages();
         }
     }

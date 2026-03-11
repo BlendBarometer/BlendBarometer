@@ -121,17 +121,24 @@ class ReportController extends Controller
     private function generateReport(): array
     {
         $phpWord = new PhpWord();
+        // document is ongeldig als er niet-escaped tekens in staan, dus we moeten escaping forceren
         Settings::setOutputEscapingEnabled(true);
         $phpWord->addTitleStyle(1, ['bold' => true, 'size' => 20, 'name' => 'Arial']);
         $phpWord->addTitleStyle(2, ['bold' => true, 'size' => 15, 'name' => 'Arial']);
 
-        $fileName = 'BlendBarometer rapport ' . $this->sessionInfo->module . ' ' . now()->format('d-m-Y') . '.docx';
+        $safeModuleName = $this->sanitizeFileNamePart($this->sessionInfo->module);
+        $fileName = "BlendBarometer rapport $safeModuleName {now()->format('d-m-Y')}.docx";
 
         $this->composeReportSections($phpWord);
 
-        $writer = IOFactory::createWriter($phpWord);
+        $writer = IOFactory::createWriter($phpWord, 'Word2007');
         $tempFile = tempnam(sys_get_temp_dir(), $fileName);
+        if ($tempFile === false) {
+            throw new \RuntimeException('Kon geen tijdelijk bestand aanmaken voor het rapport.');
+        }
+
         $writer->save($tempFile);
+        $this->assertReportIntegrity($tempFile);
 
         return [
             'tempFile' => $tempFile,
@@ -152,14 +159,14 @@ class ReportController extends Controller
     private function extractSessionInfo(): SessionInfo
     {
         return new SessionInfo(
-            name: session('name'),
-            email: session('email'),
-            academy: session('academy'),
-            academyAbbreviation: session('academy-abbreviation'),
-            module: session('module'),
-            course: session('course'),
-            summary: session('summary'),
-            sessionUid: session('session_uid'),
+            name: $this->sanitizeReportText((string) session('name', '')),
+            email: $this->sanitizeReportText((string) session('email', '')),
+            academy: $this->sanitizeReportText((string) session('academy', '')),
+            academyAbbreviation: $this->sanitizeReportText((string) session('academy-abbreviation', '')),
+            module: $this->sanitizeReportText((string) session('module', '')),
+            course: $this->sanitizeReportText((string) session('course', '')),
+            summary: $this->sanitizeReportText((string) session('summary', '')),
+            sessionUid: $this->sanitizeReportText((string) session('session_uid', '')),
         );
     }
 
@@ -608,10 +615,13 @@ class ReportController extends Controller
             'alignment' => Jc::START,
         ]);
 
-        $table->addCell(5500)->addText("{$this->sessionInfo->academyAbbreviation} - {$this->sessionInfo->course} - {$this->sessionInfo->module}", [
-            ...$headerTextStyle,
-            'color' => '888888',
-            'bold' => true],
+        $table->addCell(5500)->addText(
+            "{$this->sessionInfo->academyAbbreviation} - {$this->sessionInfo->course} - {$this->sessionInfo->module}",
+            [
+                ...$headerTextStyle,
+                'color' => '888888',
+                'bold' => true
+            ],
             ['alignment' => Jc::END,]
         );
 
@@ -664,5 +674,61 @@ class ReportController extends Controller
             'height' => 160,
             'alignment' => Jc::START,
         ]);
+    }
+
+    private function sanitizeReportText(string $text): string
+    {
+        // Keep only characters that are valid in XML 1.0 to prevent broken DOCX XML.
+        return preg_replace('/[^\x09\x0A\x0D\x20-\x{D7FF}\x{E000}-\x{FFFD}\x{10000}-\x{10FFFF}]/u', '', $text) ?? '';
+    }
+
+    private function sanitizeFileNamePart(string $value): string
+    {
+        $value = $this->sanitizeReportText($value);
+        $value = preg_replace('/[\\\\\/\:\*\?\"\<\>\|]/', '-', $value) ?? '';
+        $value = trim(preg_replace('/\s+/', ' ', $value) ?? '');
+
+        return $value !== '' ? $value : 'Module';
+    }
+
+    private function assertReportIntegrity(string $docxPath): void
+    {
+        if (!is_readable($docxPath) || filesize($docxPath) === 0) {
+            throw new \RuntimeException("Rapportbestand is leeg of niet leesbaar.");
+        }
+
+        $zip = new \ZipArchive();
+        if ($zip->open($docxPath) !== true) {
+            throw new \RuntimeException("Rapportbestand is geen geldig DOCX archief.");
+        }
+
+        $requiredEntries = [
+            '[Content_Types].xml',
+            '_rels/.rels',
+            'word/document.xml',
+        ];
+
+        foreach ($requiredEntries as $entry) {
+            if ($zip->locateName($entry) === false) {
+                $zip->close();
+                throw new \RuntimeException("DOCX mist vereist onderdeel: $entry");
+            }
+        }
+
+        $documentXml = $zip->getFromName('word/document.xml');
+        $zip->close();
+
+        if ($documentXml === false || trim($documentXml) === '') {
+            throw new \RuntimeException("DOCX bevat geen geldige document.xml inhoud.");
+        }
+
+        $previous = libxml_use_internal_errors(true);
+        $parsed = simplexml_load_string($documentXml);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+
+        if ($parsed === false) {
+            throw new \RuntimeException("DOCX document.xml is ongeldig XML.");
+        }
     }
 }
