@@ -3,27 +3,21 @@
 namespace Tests\Feature;
 
 use App\Data\SessionInfo;
-use App\Http\Controllers\ReportController;
 use PhpOffice\PhpWord\PhpWord;
-use ReflectionClass;
 use Tests\TestCase;
+use Tests\Support\TestReportController;
 
 class ReportControllerGenerateReportTest extends TestCase
 {
     public function test_generate_report_creates_docx_file_with_expected_filename_and_content(): void
     {
-        $controller = new class extends ReportController {
-            protected function composeReportSections(PhpWord $phpWord): void
-            {
-                $section = $phpWord->addSection();
-                $section->addText('Generated report test content');
-            }
-        };
+        $controller = new TestReportController();
+        $controller->withSectionComposer(function (PhpWord $phpWord): void {
+            $section = $phpWord->addSection();
+            $section->addText('Generated report test content');
+        });
 
-        $reflection = new ReflectionClass(ReportController::class);
-
-        $sessionInfoProperty = $reflection->getProperty('sessionInfo');
-        $sessionInfoProperty->setValue($controller, new SessionInfo(
+        $controller->withSessionInfo(new SessionInfo(
             name: 'Test Teacher',
             email: 'teacher@example.com',
             academy: 'Test Academy',
@@ -34,10 +28,8 @@ class ReportControllerGenerateReportTest extends TestCase
             sessionUid: 'session-123'
         ));
 
-        $generateReportMethod = $reflection->getMethod('generateReport');
-
         /** @var array{tempFile: string, fileName: string} $result */
-        $result = $generateReportMethod->invoke($controller);
+        $result = $controller->buildReport();
 
         $this->assertArrayHasKey('tempFile', $result);
         $this->assertArrayHasKey('fileName', $result);
@@ -57,12 +49,15 @@ class ReportControllerGenerateReportTest extends TestCase
         $this->assertNotFalse($documentXml);
         $this->assertStringContainsString('Generated report test content', $documentXml);
 
-        $target = storage_path('app/testing/last-generate-report.docx');
-        @mkdir(dirname($target), 0777, true);
-        copy($result['tempFile'], $target);
-        fwrite(STDOUT, PHP_EOL . 'Saved report to: ' . $target . PHP_EOL);
-
-        // Optional: still clean temp file
+        if (env('SAVE_REPORT_TEST_ARTIFACT', false)) {
+            $target = storage_path('app/testing/last-generate-report.docx');
+            @mkdir(dirname($target), 0777, true);
+            if (@copy($result['tempFile'], $target)) {
+                fwrite(STDOUT, PHP_EOL . 'Saved report to: ' . $target . PHP_EOL);
+            } else {
+                fwrite(STDOUT, PHP_EOL . 'Could not save report artifact to: ' . $target . PHP_EOL);
+            }
+        }
         @unlink($result['tempFile']);
     }
 }

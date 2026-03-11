@@ -127,12 +127,14 @@ class ReportController extends Controller
         $phpWord->addTitleStyle(2, ['bold' => true, 'size' => 15, 'name' => 'Arial']);
 
         $safeModuleName = $this->sanitizeFileNamePart($this->sessionInfo->module);
-        $fileName = "BlendBarometer rapport $safeModuleName {now()->format('d-m-Y')}.docx";
+        $currentDate = now()->format('d-m-Y');
+        $fileName = "BlendBarometer rapport $safeModuleName $currentDate.docx";
 
         $this->composeReportSections($phpWord);
 
         $writer = IOFactory::createWriter($phpWord, 'Word2007');
-        $tempFile = tempnam(sys_get_temp_dir(), $fileName);
+        $prefix = "blendreport_";
+        $tempFile = tempnam(sys_get_temp_dir(), $prefix);
         if ($tempFile === false) {
             throw new \RuntimeException('Kon geen tijdelijk bestand aanmaken voor het rapport.');
         }
@@ -154,6 +156,16 @@ class ReportController extends Controller
         $this->addResults($phpWord);
         $this->addFillableNotes($phpWord);
         $this->addEndPage($phpWord);
+    }
+
+    protected function setSessionInfoForTesting(SessionInfo $sessionInfo): void
+    {
+        $this->sessionInfo = $sessionInfo;
+    }
+
+    protected function generateReportForTesting(): array
+    {
+        return $this->generateReport();
     }
 
     private function extractSessionInfo(): SessionInfo
@@ -475,8 +487,6 @@ class ReportController extends Controller
             ->all();
 
         $page->addText('Legenda', ['alignment' => Jc::START, 'bold' => true, 'size' => 13]);
-        $legend = $page->addTable();
-
         $legend = $page->addTable();
 
         for ($j = 0; $j < count($items); $j += 2) {

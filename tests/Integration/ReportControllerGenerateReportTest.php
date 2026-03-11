@@ -3,7 +3,6 @@
 namespace Tests\Integration;
 
 use App\Data\SessionInfo;
-use App\Http\Controllers\ReportController;
 use App\Models\Content;
 use App\Models\Graph_legenda;
 use App\Models\GraphDescription;
@@ -14,8 +13,8 @@ use App\Models\Sub_category;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use ReflectionClass;
 use Tests\TestCase;
+use Tests\Support\TestReportController;
 
 class ReportControllerGenerateReportTest extends TestCase
 {
@@ -167,22 +166,11 @@ class ReportControllerGenerateReportTest extends TestCase
 
     private function invokeGenerateReport(?SessionInfo $sessionInfo = null): array
     {
-        $imageDir = $this->fixtureImageDir;
-        $controller = new class($imageDir) extends ReportController {
-            public function __construct(string $imageDir)
-            {
-                $this->imageBasePath = $imageDir;
-            }
-        };
+        $controller = new TestReportController();
+        $controller->withImageBasePath($this->fixtureImageDir);
+        $controller->withSessionInfo($sessionInfo ?? $this->createSessionInfo());
 
-        $reflection = new ReflectionClass(ReportController::class);
-
-        $sessionInfoProperty = $reflection->getProperty('sessionInfo');
-        $sessionInfoProperty->setValue($controller, $sessionInfo ?? $this->createSessionInfo());
-
-        $method = $reflection->getMethod('generateReport');
-
-        return $method->invoke($controller);
+        return $controller->buildReport();
     }
 
     private function assertDocxIntegrity(string $tempFile): void
@@ -261,13 +249,15 @@ class ReportControllerGenerateReportTest extends TestCase
             // Verify no missing-graph fallbacks appeared
             $this->assertStringNotContainsString('Grafiek niet gevonden', $xml);
 
-            $target = storage_path('app/testing/last-integration-report.docx');
-            @mkdir(dirname($target), 0777, true);
-            @unlink($target);
-            if (@copy($result['tempFile'], $target)) {
-                fwrite(STDOUT, PHP_EOL . 'Saved report to: ' . $target . PHP_EOL);
-            } else {
-                fwrite(STDOUT, PHP_EOL . 'Could not save report artifact to: ' . $target . PHP_EOL);
+            if (env('SAVE_REPORT_TEST_ARTIFACT', false)) {
+                $target = storage_path('app/testing/last-integration-report.docx');
+                @mkdir(dirname($target), 0777, true);
+                @unlink($target);
+                if (@copy($result['tempFile'], $target)) {
+                    fwrite(STDOUT, PHP_EOL . 'Saved report to: ' . $target . PHP_EOL);
+                } else {
+                    fwrite(STDOUT, PHP_EOL . 'Could not save report artifact to: ' . $target . PHP_EOL);
+                }
             }
 
             @unlink($result['tempFile']);
@@ -334,14 +324,16 @@ class ReportControllerGenerateReportTest extends TestCase
             $this->assertStringContainsString('Academie', $xml);
             $this->assertStringContainsString('Resultaten', $xml);
 
-            $target = storage_path('app/testing/last-complex-report.docx');
-            @mkdir(dirname($target), 0777, true);
-            @unlink($target);
-            if (@copy($result['tempFile'], $target)) {
-                fwrite(STDOUT, PHP_EOL . 'Saved report to: ' . $target . PHP_EOL);
-            } else {
-                fwrite(STDOUT, PHP_EOL . 'Could not save report artifact to: ' . $target . PHP_EOL);
+            if (env('SAVE_REPORT_TEST_ARTIFACT', false)) {
+                $target = storage_path('app/testing/last-complex-report.docx');
+                @mkdir(dirname($target), 0777, true);
+                if (@copy($result['tempFile'], $target)) {
+                    fwrite(STDOUT, PHP_EOL . 'Saved report to: ' . $target . PHP_EOL);
+                } else {
+                    fwrite(STDOUT, PHP_EOL . 'Could not save report artifact to: ' . $target . PHP_EOL);
+                }
             }
+            @unlink($target);
         } finally {
             $this->cleanupFixtureImages();
             $this->cleanupStaticFixtureImages();
