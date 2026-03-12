@@ -1,4 +1,4 @@
-name: Deploy Blendbarometer – Test (FTP)
+name: Deploy Blendbarometer - Test (SFTP)
 
 on:
   push:
@@ -45,22 +45,26 @@ jobs:
       - name: Prepare deployment payload
         run: bash scripts/prepare-deploy.sh
 
-      # ── Upload to FTP ──────────────────────────────────────────
-      - name: Deploy to test via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.TEST_FTP_SERVER }}
-          username: ${{ secrets.TEST_FTP_USER }}
-          password: ${{ secrets.TEST_FTP_PASSWORD }}
-          protocol: ${{ secrets.TEST_FTP_PROTOCOL }}
-          port: ${{ secrets.TEST_FTP_PORT }}
-          server-dir: ${{ secrets.TEST_FTP_PATH }}
-          exclude: |
-            **/.git*
-            **/.git*/**
-            node_modules/**
-            tests/**
-            .env
-            .env.*
-            phpunit.xml
-            vite.config.js
+      # ── Upload to SFTP ─────────────────────────────────────────
+      - name: Install lftp (SFTP client)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lftp
+
+      - name: Deploy to test via SFTP
+        env:
+          FTP_HOST: ${{ secrets.TEST_FTP_SERVER }}
+          FTP_USER: ${{ secrets.TEST_FTP_USER }}
+          FTP_PASSWORD: ${{ secrets.TEST_FTP_PASSWORD }}
+          FTP_PORT: ${{ secrets.TEST_FTP_PORT }}
+          FTP_PROTOCOL: ${{ secrets.TEST_FTP_PROTOCOL }}
+          FTP_PATH: ${{ secrets.TEST_FTP_PATH }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${FTP_HOST}" ] || [ -z "${FTP_USER}" ] || [ -z "${FTP_PASSWORD}" ] || [ -z "${FTP_PATH}" ] || [ -z "${FTP_PORT:-}" ] || [ -z "${FTP_PROTOCOL}" ]; then
+            echo "Missing one or more required secrets: TEST_FTP_SERVER, TEST_FTP_USER, TEST_FTP_PASSWORD, TEST_FTP_PATH, TEST_FTP_PORT, TEST_FTP_PROTOCOL"
+            exit 1
+          fi
+
+          lftp -u "${FTP_USER}","${FTP_PASSWORD}" ${FTP_PROTOCOL}://"${FTP_HOST}":"${FTP_PORT}" -e "set ${FTP_PROTOCOL}:auto-confirm yes; set net:max-retries 2; set net:timeout 20; mirror -R ./ \"${FTP_PATH}\" --verbose --parallel=2 --exclude-glob .git* --exclude-glob .github --exclude-glob node_modules --exclude-glob tests --exclude-glob .env --exclude-glob .env.* --exclude-glob phpunit.xml --exclude-glob vite.config.js; bye"
