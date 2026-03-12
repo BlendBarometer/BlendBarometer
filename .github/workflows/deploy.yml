@@ -1,4 +1,4 @@
-name: Deploy Blendbarometer – Test (FTP)
+name: Deploy Blendbarometer - Test (SFTP)
 
 on:
   push:
@@ -45,22 +45,18 @@ jobs:
       - name: Prepare deployment payload
         run: bash scripts/prepare-deploy.sh
 
-      # ── Upload to FTP ──────────────────────────────────────────
-      - name: Deploy to test via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.TEST_FTP_SERVER }}
-          username: ${{ secrets.TEST_FTP_USER }}
-          password: ${{ secrets.TEST_FTP_PASSWORD }}
-          protocol: ${{ secrets.TEST_FTP_PROTOCOL }}
-          port: ${{ secrets.TEST_FTP_PORT }}
-          server-dir: ${{ secrets.TEST_FTP_PATH }}
-          exclude: |
-            **/.git*
-            **/.git*/**
-            node_modules/**
-            tests/**
-            .env
-            .env.*
-            phpunit.xml
-            vite.config.js
+      # ── Upload to SFTP ─────────────────────────────────────────
+      - name: Install lftp (SFTP client)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lftp
+
+      - name: Deploy to test via SFTP
+        env:
+          FTP_HOST: ${{ secrets.TEST_FTP_SERVER }}
+          FTP_USER: ${{ secrets.TEST_FTP_USER }}
+          FTP_PASSWORD: ${{ secrets.TEST_FTP_PASSWORD }}
+          FTP_PORT: ${{ secrets.TEST_FTP_PORT }}
+          FTP_PROTOCOL: ${{ secrets.TEST_FTP_PROTOCOL }}
+          FTP_PATH: ${{ secrets.TEST_FTP_PATH }}
+        run: bash scripts/deploy-upload.sh
