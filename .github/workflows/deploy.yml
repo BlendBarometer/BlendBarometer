@@ -1,13 +1,13 @@
-name: Deploy Blendbarometer
+name: Deploy Blendbarometer - Test (SFTP)
 
 on:
   push:
     branches:
-      - main
+      - test
   workflow_dispatch:
 
 concurrency:
-  group: production-deploy
+  group: deploy-test
   cancel-in-progress: false
 
 jobs:
@@ -18,35 +18,45 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Deploy over SSH
-        uses: appleboy/ssh-action@v1.0.3
+      # ── Install PHP dependencies ───────────────────────────────
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
         with:
-          host: ${{ secrets.PROD_HOST }}
-          username: ${{ secrets.PROD_USER }}
-          key: ${{ secrets.PROD_SSH_KEY }}
-          port: ${{ secrets.PROD_PORT }}
-          script_stop: true
-          envs: BRANCH,APP_PATH,PHP_BIN,COMPOSER_BIN,NPM_BIN,SKIP_NPM_BUILD,SKIP_MIGRATIONS
-          script: |
-            set -e
-            BRANCH="${{ github.ref_name }}"
-            APP_PATH="${{ secrets.PROD_APP_PATH }}"
-            PHP_BIN="${{ secrets.PROD_PHP_BIN }}"
-            COMPOSER_BIN="${{ secrets.PROD_COMPOSER_BIN }}"
-            NPM_BIN="${{ secrets.PROD_NPM_BIN }}"
-            SKIP_NPM_BUILD="${{ secrets.PROD_SKIP_NPM_BUILD }}"
-            SKIP_MIGRATIONS="${{ secrets.PROD_SKIP_MIGRATIONS }}"
+          php-version: '8.2'
+          extensions: mbstring, xml, ctype, json, bcmath
 
-            if [ -z "$APP_PATH" ]; then
-              echo "Missing required secret PROD_APP_PATH"
-              exit 1
-            fi
+      - name: Install Composer dependencies
+        run: composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
 
-            if [ -z "$PHP_BIN" ]; then PHP_BIN="php"; fi
-            if [ -z "$COMPOSER_BIN" ]; then COMPOSER_BIN="composer"; fi
-            if [ -z "$NPM_BIN" ]; then NPM_BIN="npm"; fi
-            if [ -z "$SKIP_NPM_BUILD" ]; then SKIP_NPM_BUILD="0"; fi
-            if [ -z "$SKIP_MIGRATIONS" ]; then SKIP_MIGRATIONS="0"; fi
+      # ── Build front-end assets ─────────────────────────────────
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
 
-            cd "$APP_PATH"
-            bash scripts/deploy.sh
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build assets
+        run: npm run build
+
+      # ── Prepare upload (remove dev / CI-only files) ────────────
+      - name: Prepare deployment payload
+        run: bash scripts/prepare-deploy.sh
+
+      # ── Upload to SFTP ─────────────────────────────────────────
+      - name: Install lftp (SFTP client)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lftp
+
+      - name: Deploy to test via SFTP
+        env:
+          FTP_HOST: ${{ secrets.TEST_FTP_SERVER }}
+          FTP_USER: ${{ secrets.TEST_FTP_USER }}
+          FTP_PASSWORD: ${{ secrets.TEST_FTP_PASSWORD }}
+          FTP_PORT: ${{ secrets.TEST_FTP_PORT }}
+          FTP_PROTOCOL: ${{ secrets.TEST_FTP_PROTOCOL }}
+          FTP_PATH: ${{ secrets.TEST_FTP_PATH }}
+        run: bash scripts/deploy-upload.sh
