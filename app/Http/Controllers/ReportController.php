@@ -26,7 +26,7 @@ class ReportController extends Controller
 {
     private int $pageNumber = 0;
     private SessionInfo $sessionInfo;
-    protected string $imageBasePath;
+    protected string $imageBasePath = 'https://blendbarometer.nl/images/';
 
     private $labelStyle = ['color' => '888888'];
     private $valueStyle = ['bold' => true];
@@ -35,13 +35,6 @@ class ReportController extends Controller
     private $labelWidth = 1500;
     private $valueWidth = 3000;
     private $paddingWidth = 300;
-
-    public function __construct()
-    {
-        $this->imageBasePath = app()->environment('production')
-            ? 'https://blendbarometer.nl/images/'
-            : rtrim(public_path('images'), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
-    }
 
     public function sendReport()
     {
@@ -406,10 +399,10 @@ class ReportController extends Controller
             $name1 = null;
             $name2 = null;
             if ($i < $list1->count()) {
-                $name1 = preg_replace('/\s+/', '-', trim($list1[$i]));
+                $name1 = str_replace(' ', '-', $list1[$i]);
             }
             if ($i < $list2->count()) {
-                $name2 = preg_replace('/\s+/', '-', trim($list2[$i]));
+                $name2 = str_replace(' ', '-', $list2[$i]);
             }
             $this->newGraphRow($table, $name1, $name2);
             $i++;
