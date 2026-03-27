@@ -9,6 +9,14 @@ const onlineColor = {
     backgroundColor: 'rgba(255,99,132,0.5)',
 }
 
+function scoreToFrequencyLabel(value) {
+    const numericValue = Number(value);
+    if (numericValue === 0) return 'nooit';
+    if (numericValue === 1) return 'af-en-toe';
+    if (numericValue === 2) return 'vaak';
+    return value;
+}
+
 const lessonLevelGraph = document.getElementById('lessonLevel');
 
 Chart.defaults.font.size = 16;
@@ -55,7 +63,7 @@ new Chart(lessonLevelGraph, {
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': csrfToken,
                         },
-                        body: JSON.stringify({image: base64Image, name: 'radar'})
+                        body: JSON.stringify({ image: base64Image, name: 'radar' })
                     }).then(response => {
 
                     }).catch(error => {
@@ -144,8 +152,14 @@ for (const category of lessonLevelSubcategories) {
             },
             scales: {
                 y: {
-                    suggestedMin: 0,
-                    suggestedMax: 2
+                    min: 0,
+                    max: 2,
+                    ticks: {
+                        stepSize: 1,
+                        callback: function (value) {
+                            return scoreToFrequencyLabel(value);
+                        }
+                    }
                 },
             },
             scale: {
@@ -170,12 +184,12 @@ for (const category of lessonLevelSubcategories) {
                                 'Content-Type': 'application/json',
                                 'X-CSRF-TOKEN': csrfToken,
                             },
-                            body: JSON.stringify({image: base64Image, name: 'physical' + category.name})
+                            body: JSON.stringify({ image: base64Image, name: 'physical' + category.name })
                         }).then(response => {
 
                         }).catch(error => {
 
-                        });              
+                        });
                     }
                 }
             }
@@ -188,7 +202,7 @@ for (const category of lessonLevelSubcategories) {
         const label = categoryLabels[i];
         const data = categoryData[i];
 
-        graphAriaLabel += label + ": " + data + ". ";
+        graphAriaLabel += label + ": " + scoreToFrequencyLabel(data) + ". ";
     }
 
     graph.ariaLabel = graphAriaLabel;
@@ -223,8 +237,14 @@ for (const category of lessonLevelOnlineSubcategories) {
             },
             scales: {
                 y: {
-                    suggestedMin: 0,
-                    suggestedMax: 2
+                    min: 0,
+                    max: 2,
+                    ticks: {
+                        stepSize: 1,
+                        callback: function (value) {
+                            return scoreToFrequencyLabel(value);
+                        }
+                    }
                 }
             },
             scale: {
@@ -246,7 +266,7 @@ for (const category of lessonLevelOnlineSubcategories) {
                                 'Content-Type': 'application/json',
                                 'X-CSRF-TOKEN': csrfToken,
                             },
-                            body: JSON.stringify({image: base64Image, name: 'online' + category.name})
+                            body: JSON.stringify({ image: base64Image, name: 'online' + category.name })
                         }).then(response => {
 
                         }).catch(error => {
@@ -264,7 +284,7 @@ for (const category of lessonLevelOnlineSubcategories) {
         const label = categoryLabels[i];
         const data = categoryData[i];
 
-        graphAriaLabel += label + ": " + data + ". ";
+        graphAriaLabel += label + ": " + scoreToFrequencyLabel(data) + ". ";
     }
 
     graph.ariaLabel = graphAriaLabel;
@@ -286,7 +306,7 @@ const moduleLevelDataArray = {};
 for (const [i, [_, item]] of Object.entries(moduleLevelData).entries()) {
 
     for (const [_, item2] of Object.entries(item)) {
-            moduleLevelDataArray[j] = parseInt(item2);
+        moduleLevelDataArray[j] = parseInt(item2);
         j++;
     }
 }
@@ -330,22 +350,22 @@ for ([key, value] of Object.entries(moduleLevelDataArray)) {
     innerData.push(1);
     let color;
     switch (value) {
-    case 1:
-        color = legendColors[0];
-        break;
-    case 2:
-        color = legendColors[1];
-        break;
-    case 3:
-        color = legendColors[2];
-        break;
-    case 4:
-        color = legendColors[3];
-        break;
-    case 0:
-        color = legendColors[4];
-        break;
-}
+        case 1:
+            color = legendColors[0];
+            break;
+        case 2:
+            color = legendColors[1];
+            break;
+        case 3:
+            color = legendColors[2];
+            break;
+        case 4:
+            color = legendColors[3];
+            break;
+        case 0:
+            color = legendColors[4];
+            break;
+    }
     innerColors.push(color);
 }
 
@@ -474,7 +494,7 @@ new Chart(moduleLevelDataGraph, {
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': csrfToken,
                         },
-                        body: JSON.stringify({image: base64Image, name: 'wheelInside'})
+                        body: JSON.stringify({ image: base64Image, name: 'wheelInside' })
                     }).then(response => {
 
                     }).catch(error => {
