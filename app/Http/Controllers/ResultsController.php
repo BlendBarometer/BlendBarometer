@@ -172,7 +172,9 @@ class ResultsController extends Controller
 
             // Define the path where the image will be saved
             $uid = session()->get('session_uid');
-            $imagePath = 'images/temp/' . $uid . '_' . str_replace(' ', '-', $name) . '.png';
+            $normalizedName = preg_replace('/[\p{Z}\s]+/u', '-', (string) $name) ?? '';
+            $normalizedName = trim($normalizedName, '-');
+            $imagePath = "images/temp/{$uid}_$normalizedName.png";
 
             $saved = Storage::disk('public')->put($imagePath, $imageData);
 

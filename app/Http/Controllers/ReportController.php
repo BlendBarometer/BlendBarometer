@@ -399,10 +399,12 @@ class ReportController extends Controller
             $name1 = null;
             $name2 = null;
             if ($i < $list1->count()) {
-                $name1 = str_replace(' ', '-', $list1[$i]);
+                $name1 = preg_replace('/[\p{Z}\s]+/u', '-', (string) $list1[$i]) ?? '';
+                $name1 = trim($name1, '-');
             }
             if ($i < $list2->count()) {
-                $name2 = str_replace(' ', '-', $list2[$i]);
+                $name2 = preg_replace('/[\p{Z}\s]+/u', '-', (string) $list2[$i]) ?? '';
+                $name2 = trim($name2, '-');
             }
             $this->newGraphRow($table, $name1, $name2);
             $i++;
