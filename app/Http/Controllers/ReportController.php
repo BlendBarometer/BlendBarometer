@@ -8,6 +8,7 @@ use App\Models\GraphDescription;
 use App\Models\Question_category;
 use App\Models\Sub_category;
 use App\Models\EmailRule;
+use App\Support\Whitespace;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\File;
@@ -399,11 +400,11 @@ class ReportController extends Controller
             $name1 = null;
             $name2 = null;
             if ($i < $list1->count()) {
-                $name1 = preg_replace('/[\p{Z}\s]+/u', '-', (string) $list1[$i]) ?? '';
+                $name1 = Whitespace::replaceAll((string) $list1[$i], '-');
                 $name1 = trim($name1, '-');
             }
             if ($i < $list2->count()) {
-                $name2 = preg_replace('/[\p{Z}\s]+/u', '-', (string) $list2[$i]) ?? '';
+                $name2 = Whitespace::replaceAll((string) $list2[$i], '-');
                 $name2 = trim($name2, '-');
             }
             $this->newGraphRow($table, $name1, $name2);

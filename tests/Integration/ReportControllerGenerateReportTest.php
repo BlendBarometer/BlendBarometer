@@ -10,6 +10,7 @@ use App\Models\Module_level_answer;
 use App\Models\Question;
 use App\Models\Question_category;
 use App\Models\Sub_category;
+use App\Support\Whitespace;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -375,7 +376,7 @@ class ReportControllerGenerateReportTest extends TestCase
                 'label' => 'Zoekstrategieën',
             ]);
 
-            $normalized = preg_replace('/[\p{Z}\s]+/u', '-', $subCategoryName) ?? '';
+            $normalized = Whitespace::replaceAll($subCategoryName, '-');
             $normalized = trim($normalized, '-');
 
             $extraImage = $disk->path('images/temp/' . self::SESSION_UID . '_physical' . $normalized . '.png');
@@ -395,7 +396,7 @@ class ReportControllerGenerateReportTest extends TestCase
 
             foreach ($spaceVariants as $spaceChar) {
                 $subCategoryName = "Informatie{$spaceChar}verwerven";
-                $normalized = preg_replace('/[\p{Z}\s]+/u', '-', $subCategoryName) ?? '';
+                $normalized = Whitespace::replaceAll($subCategoryName, '-');
                 $normalized = trim($normalized, '-');
                 $this->assertStringContainsString($normalized, $xml);
             }
