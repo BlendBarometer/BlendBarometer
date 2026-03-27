@@ -11,10 +11,10 @@ const onlineColor = {
 
 function scoreToFrequencyLabel(value) {
     const numericValue = Number(value);
-    if (numericValue === 0) return 'nooit';
-    if (numericValue === 1) return 'af-en-toe';
-    if (numericValue === 2) return 'vaak';
-    return value;
+    if (numericValue === 0) return 'Nooit';
+    if (numericValue === 1) return 'Af en toe';
+    if (numericValue === 2) return 'Vaak';
+    return String(value);
 }
 
 const lessonLevelGraph = document.getElementById('lessonLevel');
