@@ -13,6 +13,7 @@ use App\Models\Question;
 use App\Models\Question_category;
 use App\Models\Sub_category;
 use App\Models\User;
+use App\Support\Whitespace;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -466,6 +467,75 @@ class ReportControllerGenerateReportTest extends TestCase
             if ($tempFile !== null) {
                 @unlink($tempFile);
             }
+            $this->cleanupFixtureImages();
+            $this->cleanupStaticFixtureImages();
+        }
+    }
+
+    public function test_generate_report_matches_chart_files_for_multiple_unicode_whitespace_variants(): void
+    {
+        $this->seedDatabase();
+        $this->createStaticFixtureImages();
+        $this->createFixtureImages();
+
+        $spaceVariants = [
+            " ",        // Regular space
+            "\u{00A0}", // No-break space
+            "\u{202F}", // Narrow no-break space
+            "\u{2007}", // Figure space
+            "\u{2009}", // Thin space
+            "\u{3000}", // Ideographic space
+            "\t",       // Horizontal tab
+        ];
+
+        $disk = Storage::disk('public');
+        $nextId = 999;
+
+        foreach ($spaceVariants as $spaceChar) {
+            $subCategoryName = "Informatie{$spaceChar}verwerven";
+
+            Sub_category::create([
+                'id' => $nextId,
+                'question_category_id' => 1,
+                'name' => $subCategoryName,
+            ]);
+
+            Question::create([
+                'question_category_id' => 1,
+                'sub_category_id' => $nextId,
+                'text' => 'Zoekstrategieën toepassen',
+                'label' => 'Zoekstrategieën',
+            ]);
+
+            $normalized = Whitespace::replaceAll($subCategoryName, '-');
+            $normalized = trim($normalized, '-');
+
+            $extraImage = $disk->path('images/temp/' . self::SESSION_UID . '_physical' . $normalized . '.png');
+            $img = imagecreatetruecolor(10, 10);
+            imagepng($img, $extraImage);
+
+            $nextId++;
+        }
+
+        try {
+            $result = $this->invokeGenerateReport();
+
+            $this->assertFileExists($result['tempFile']);
+            $this->assertDocxIntegrity($result['tempFile']);
+
+            $xml = $this->readDocumentXml($result['tempFile']);
+
+            foreach ($spaceVariants as $spaceChar) {
+                $subCategoryName = "Informatie{$spaceChar}verwerven";
+                $normalized = Whitespace::replaceAll($subCategoryName, '-');
+                $normalized = trim($normalized, '-');
+                $this->assertStringContainsString($normalized, $xml);
+            }
+
+            $this->assertStringNotContainsString('Grafiek niet gevonden', $xml);
+
+            @unlink($result['tempFile']);
+        } finally {
             $this->cleanupFixtureImages();
             $this->cleanupStaticFixtureImages();
         }

@@ -8,6 +8,7 @@ use App\Models\Question;
 use App\Models\Question_category;
 use App\Models\Sub_category;
 use App\Models\Graph_legenda;
+use App\Support\Whitespace;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -172,7 +173,9 @@ class ResultsController extends Controller
 
             // Define the path where the image will be saved
             $uid = session()->get('session_uid');
-            $imagePath = 'images/temp/' . $uid . '_' . str_replace(' ', '-', $name) . '.png';
+            $normalizedName = Whitespace::replaceAll((string) $name, '-');
+            $normalizedName = trim($normalizedName, '-');
+            $imagePath = "images/temp/{$uid}_$normalizedName.png";
 
             $saved = Storage::disk('public')->put($imagePath, $imageData);
 
