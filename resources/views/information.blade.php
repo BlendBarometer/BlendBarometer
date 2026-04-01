@@ -56,6 +56,10 @@
         <section class="py-4">
             <h2 class="fs-4">Module gegevens</h2>
 
+            @php
+                $moduleInformationAnswers ??= [];
+            @endphp
+
             <div class="row w-50">
                 <div class="col pe-0">
                     <label for="module">Module</label>
@@ -64,29 +68,15 @@
                 </div>
             </div>
 
-            <x-textarea-field
-                name="summary"
-                label="Samenvatting"
-                :value="old('summary', session('summary'))"
-                placeholder="Beschrijf in 5 zinnen waar deze module om gaat"
-                :maxlength="2000"
-            />
-
-            <x-textarea-field
-                name="goals"
-                label="Leeruitkomsten"
-                :value="old('goals', session('goals'))"
-                placeholder="Beschrijf in 5 zinnen wat de leeruitkomsten van deze module zijn"
-                :maxlength="2000"
-            />
-
-            <x-textarea-field
-                name="evaluation"
-                label="Toetsing"
-                :value="old('evaluation', session('evaluation'))"
-                placeholder="Beschrijf hoe de toetsing van deze module plaatsvindt"
-                :maxlength="2000"
-            />
+            @foreach ($moduleInformationFields as $field)
+                <x-textarea-field
+                    :name="$field->key"
+                    :label="$field->title"
+                    :value="old($field->key, $moduleInformationAnswers[$field->id] ?? session($field->key))"
+                    :placeholder="$field->placeholder"
+                    :maxlength="$field->maxlength"
+                />
+            @endforeach
         </section>
 
         <x-navigation-buttons-with-submit :previous="$previous ?? route('intermediate.view', 'gegevens')"/>

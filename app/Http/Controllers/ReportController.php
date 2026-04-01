@@ -5,12 +5,16 @@ namespace App\Http\Controllers;
 use App\Data\SessionInfo;
 use App\Models\Content;
 use App\Models\GraphDescription;
+use App\Models\ModuleInformationAnswer;
+use App\Models\ModuleInformationField;
 use App\Models\Question_category;
 use App\Models\Sub_category;
 use App\Models\EmailRule;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Log;
@@ -334,8 +338,8 @@ class ReportController extends Controller
 
     private function addModuleSubjectSections($page): void
     {
-        foreach ($this->getModuleSubjects() as $title => $content) {
-            $this->addModuleSubjectSection($page, $title, $content);
+        foreach ($this->getModuleSubjectEntries() as $entry) {
+            $this->addModuleSubjectSection($page, $entry['title'], $entry['content']);
         }
     }
 
@@ -352,13 +356,59 @@ class ReportController extends Controller
         ]);
     }
 
-    private function getModuleSubjects(): array
+    private function getModuleSubjectEntries(): array
     {
-        return [
-            'Samenvatting module' => $this->sessionInfo->summary,
-            'Leeruitkomsten module' => $this->sessionInfo->goals,
-            'Toetsing module' => $this->sessionInfo->evaluation,
-        ];
+        if (!Schema::hasTable('module_information_field') || !Schema::hasTable('module_information_answer')) {
+            return [
+                ['title' => 'Samenvatting module', 'content' => $this->sessionInfo->summary],
+                ['title' => 'Leeruitkomsten module', 'content' => $this->sessionInfo->goals],
+                ['title' => 'Toetsing module', 'content' => $this->sessionInfo->evaluation],
+            ];
+        }
+
+        $fields = ModuleInformationField::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
+        if ($fields->isEmpty()) {
+            return [
+                ['title' => 'Samenvatting module', 'content' => $this->sessionInfo->summary],
+                ['title' => 'Leeruitkomsten module', 'content' => $this->sessionInfo->goals],
+                ['title' => 'Toetsing module', 'content' => $this->sessionInfo->evaluation],
+            ];
+        }
+
+        $answersByField = [];
+
+        if (Auth::check()) {
+            $answersByField = ModuleInformationAnswer::query()
+                ->where('user_id', Auth::id())
+                ->whereIn('module_information_field_id', $fields->pluck('id'))
+                ->pluck('answer', 'module_information_field_id')
+                ->toArray();
+        }
+
+        return $fields->map(function (ModuleInformationField $field) use ($answersByField): array {
+            $fallback = $this->getFallbackModuleSubjectValue($field->key);
+            $content = (string) ($answersByField[$field->id] ?? session($field->key, $fallback));
+
+            return [
+                'title' => $this->sanitizeReportText($field->title),
+                'content' => $this->sanitizeReportText($content),
+            ];
+        })->all();
+    }
+
+    private function getFallbackModuleSubjectValue(string $key): string
+    {
+        return match ($key) {
+            'summary' => $this->sessionInfo->summary,
+            'goals' => $this->sessionInfo->goals,
+            'evaluation' => $this->sessionInfo->evaluation,
+            default => '',
+        };
     }
 
     private function addTableOfContents($phpWord)

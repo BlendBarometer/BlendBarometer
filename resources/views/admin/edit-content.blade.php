@@ -2,7 +2,7 @@
     <div class="container">
         <h1>Content bewerken</h1>
         <p>
-            Bewerk de content van de pagina’s. Navigeer met de tabjes en vergeet niet om op opslaan te klikken, onderaan
+            Bewerk de content van de pagina's. Navigeer met de tabjes en vergeet niet om op opslaan te klikken, onderaan
             de pagina.
         </p>
 
@@ -47,6 +47,13 @@
                         data-bs-target="#chart-tab-pane"
                         type="button" role="tab" aria-selected="false">
                     Grafieken
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {{ !(isset($tab) && $tab === 'module-information') ?: 'active' }}" data-bs-toggle="tab"
+                        data-bs-target="#module-information-tab-pane"
+                        type="button" role="tab" aria-selected="false">
+                    Module gegevens
                 </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -109,11 +116,19 @@
                  aria-labelledby="grafieken-tab"
                  tabindex="-1">
                 <x-admin.edit-content.chart :lessonLevelPhysicalSubcategories="$lessonLevelPhysicalSubcategories"
-                    :lessonLevelOnlineSubcategories="$lessonLevelOnlineSubcategories" 
+                    :lessonLevelOnlineSubcategories="$lessonLevelOnlineSubcategories"
                     :generalLessonLevelDescription="$generalLessonLevelDescription"
                     :generalModuleDescription="$generalModuleDescription"
                     />
             </div>
+
+            <div class="tab-pane fade {{ !(isset($tab) && $tab === 'module-information') ?: 'show active' }}" id="module-information-tab-pane"
+                role="tabpanel"
+                aria-labelledby="module-information-tab"
+                tabindex="-1">
+            <x-admin.edit-content.module-information-fields :fields="$moduleInformationFields"/>
+            </div>
+
             <div class="tab-pane fade {{ !(isset($tab) && $tab === 'legenda') ?: 'show active' }}" id="legenda-tab-pane"
                  role="tabpanel"
                  aria-labelledby="legenda-tab"

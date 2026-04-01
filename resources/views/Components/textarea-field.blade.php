@@ -16,6 +16,7 @@
         id="{{ $name }}"
         @if($maxlength) maxlength="{{ $maxlength }}" @endif
         placeholder="{{ $placeholder }}"
+        required
     >{{ $value }}</textarea>
 
     @error($name)

@@ -6,10 +6,13 @@ use App\Data\SessionInfo;
 use App\Models\Content;
 use App\Models\Graph_legenda;
 use App\Models\GraphDescription;
+use App\Models\ModuleInformationAnswer;
+use App\Models\ModuleInformationField;
 use App\Models\Module_level_answer;
 use App\Models\Question;
 use App\Models\Question_category;
 use App\Models\Sub_category;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -331,6 +334,51 @@ class ReportControllerGenerateReportTest extends TestCase
             $this->assertStringContainsString('Resultaten', $xml);
 
             $this->saveReportArtifactIfEnabled($tempFile, 'last-complex-report.docx');
+        } finally {
+            if ($tempFile !== null) {
+                @unlink($tempFile);
+            }
+            $this->cleanupFixtureImages();
+            $this->cleanupStaticFixtureImages();
+        }
+    }
+
+    public function test_generate_report_uses_database_driven_module_information_titles_and_answers(): void
+    {
+        $this->seedDatabase();
+        $this->createStaticFixtureImages();
+        $this->createFixtureImages();
+
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $field = ModuleInformationField::create([
+            'key' => 'summary',
+            'title' => 'Eigen titel vanuit admin',
+            'placeholder' => 'Niet relevant voor rapport',
+            'maxlength' => 2000,
+            'sort_order' => 1,
+            'is_active' => true,
+        ]);
+
+        ModuleInformationAnswer::create([
+            'user_id' => $user->id,
+            'module_information_field_id' => $field->id,
+            'answer' => 'Antwoord uit database',
+        ]);
+
+        $tempFile = null;
+
+        try {
+            $result = $this->invokeGenerateReport();
+            $tempFile = $result['tempFile'];
+
+            $this->assertFileExists($tempFile);
+            $this->assertDocxIntegrity($tempFile);
+
+            $xml = $this->readDocumentXml($tempFile);
+            $this->assertStringContainsString('Eigen titel vanuit admin', $xml);
+            $this->assertStringContainsString('Antwoord uit database', $xml);
         } finally {
             if ($tempFile !== null) {
                 @unlink($tempFile);
