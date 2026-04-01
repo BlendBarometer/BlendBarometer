@@ -244,8 +244,13 @@ class ReportControllerGenerateReportTest extends TestCase
             $this->assertStringContainsString('Over module', $xml);
             $this->assertStringContainsString('test summary', $xml);
 
-            // Results page
-            $this->assertStringContainsString('Resultaten', $xml);
+            // Results page - subcategories
+            $this->assertStringContainsString('Samenwerken', $xml);
+            $this->assertStringContainsString('Onderzoeken', $xml);
+            $this->assertStringContainsString('Uitleg:', $xml);
+            $this->assertStringContainsString('hier komt notities te staan', $xml);
+            $this->assertStringContainsString('Fysiek', $xml);
+            $this->assertStringContainsString('Online', $xml);
             $this->assertStringContainsString('Lesniveau - Algemeen', $xml);
             $this->assertStringContainsString('Moduleniveau', $xml);
             $this->assertStringContainsString('Legenda', $xml);

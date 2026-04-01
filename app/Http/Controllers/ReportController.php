@@ -486,9 +486,6 @@ class ReportController extends Controller
 
         $page->addTitle('Resultaten', 1, $this->pageNumber);
 
-        $page->addTextBox(['alignment' => Jc::CENTER, 'width' => 470, 'height' => 80, 'borderColor' => $this->NotesTextBoxColor])
-            ->addText('Notities:');
-
         $tempId = $this->sessionInfo->sessionUid;
         $imageRelativePathRadar = "images/temp/{$tempId}_radar.png";
         $imagePathRadar = Storage::disk('public')->path($imageRelativePathRadar);
@@ -505,40 +502,57 @@ class ReportController extends Controller
             $page->addText('Grafiek niet gevonden.');
         }
 
-        $list1 = Sub_category::where('question_category_id', 1)->pluck('name');
-        $list2 = Sub_category::where('question_category_id', 2)->pluck('name');
+        $page->addTextBox(['alignment' => Jc::CENTER, 'width' => 470, 'height' => 80])
+            ->addText('hier komt notities te staan');
 
-        $i = 0;
-        $looping = true;
-        while ($looping) {
-            if (($i) % 2 == 0) {
-                $page = $this->createPage($phpWord);
-                $this->addStandardHeaderFooter($page);
-                $table = $page->addTable([
-                    'alignment' => Jc::CENTER,
-                ]);
-                $table->addRow();
-                if ($i == 0) {
-                    $table->addCell(6000)->addText('Fysieke leeractiviteiten', ['alignment' => Jc::START, 'bold' => true, 'size' => 15]);
-                    $table->addCell(6000)->addText('Online leeractiviteiten', ['alignment' => Jc::END, 'bold' => true, 'size' => 15]);
-                }
-                $page->addTextBreak(2);
+        $subCategories = Sub_category::orderBy('id')->get();
+
+        foreach ($subCategories as $subCategory) {
+            $page = $this->createPage($phpWord);
+            $this->addStandardHeaderFooter($page);
+
+            // Title
+            $page->addTitle(trim(Whitespace::replaceAll((string) $subCategory->name, '-'), '-'), 2, $this->pageNumber);
+
+            // Graph table
+            $graphTable = $page->addTable(['alignment' => Jc::CENTER]);
+            $graphTable->addRow();
+
+            $tempId = $this->sessionInfo->sessionUid;
+            $cleanedName = trim(Whitespace::replaceAll((string) $subCategory->name, '-'), '-');
+            $physicalImagePath = Storage::disk('public')->path("images/temp/{$tempId}_physical{$cleanedName}.png");
+            $onlineImagePath = Storage::disk('public')->path("images/temp/{$tempId}_online{$cleanedName}.png");
+
+            $cell1 = $graphTable->addCell(6000);
+            $cell2 = $graphTable->addCell(6000);
+
+            if (file_exists($physicalImagePath)) {
+                $this->addGraph($physicalImagePath, $cell1);
             }
-            $name1 = null;
-            $name2 = null;
-            if ($i < $list1->count()) {
-                $name1 = Whitespace::replaceAll((string) $list1[$i], '-');
-                $name1 = trim($name1, '-');
+
+            if (file_exists($onlineImagePath)) {
+                $this->addGraph($onlineImagePath, $cell2);
             }
-            if ($i < $list2->count()) {
-                $name2 = Whitespace::replaceAll((string) $list2[$i], '-');
-                $name2 = trim($name2, '-');
+
+            // Labels row
+            $graphTable->addRow();
+            $graphTable->addCell(6000)->addText('Fysiek', ['alignment' => Jc::CENTER, 'size' => 11]);
+            $graphTable->addCell(6000)->addText('Online', ['alignment' => Jc::CENTER, 'size' => 11]);
+
+            // Explanation
+            $page->addTextBreak(1);
+            $page->addText('Uitleg:', ['bold' => true, 'size' => 12]);
+            $description = GraphDescription::where('sub_category_id', $subCategory->id)->first();
+            if ($description) {
+                $page->addText($description->description);
+            } else {
+                $page->addText('Geen beschrijving beschikbaar.');
             }
-            $this->newGraphRow($table, $name1, $name2);
-            $i++;
-            if ($i >= $list1->count() && $i >= $list2->count()) {
-                $looping = false;
-            }
+
+            // Notes box
+            $page->addTextBreak(1);
+            $page->addTextBox(['alignment' => Jc::CENTER, 'width' => 470, 'height' => 90])
+                ->addText('hier komt notities te staan');
         }
 
         $page = $this->createPage($phpWord);
@@ -644,54 +658,6 @@ class ReportController extends Controller
         return preg_replace('/[[:^print:]]/', '', $text);
     }
 
-    private function newGraphRow($table, $name1, $name2)
-    {
-        $name1Here = $name1 != null;
-        $name2Here = $name2 != null;
-
-        $tempId = $this->sessionInfo->sessionUid;
-        $imageRelativePath1 = "images/temp/{$tempId}_physical{$name1}.png";
-        $imagePath1 = Storage::disk('public')->path($imageRelativePath1);
-
-        $imageRelativePath2 = "images/temp/{$tempId}_online{$name2}.png";
-        $imagePath2 = Storage::disk('public')->path($imageRelativePath2);
-
-        $table->addRow();
-        $cell1 = $table->addCell(6000);
-        $cell2 = $table->addCell(6000);
-
-        if ($name1Here) {
-            $cell1->addTextBreak(2);
-            $this->addGraph($imagePath1, $cell1);
-        }
-
-        if ($name2Here) {
-            $cell2->addTextBreak(2);
-            $this->addGraph($imagePath2, $cell2);
-        }
-
-        $table->addRow();
-        $cell1 = $table->addCell(6000);
-        $cell2 = $table->addCell(6000);
-        if ($name1Here) {
-            $cell1->addText($name1, ['alignment' => Jc::START, 'bold' => true, 'size' => 13]);
-        }
-        if ($name2Here) {
-            $cell2->addText($name2, ['alignment' => Jc::END, 'bold' => true, 'size' => 13]);
-        }
-
-        $table->addRow();
-        $cell1 = $table->addCell(6000);
-        $cell2 = $table->addCell(6000);
-        if ($name1Here) {
-            $cell1->addTextBox(['alignment' => Jc::START, 'width' => 230, 'height' => 70, 'borderColor' => $this->NotesTextBoxColor])
-                ->addText('Notities:');
-        }
-        if ($name2 != null) {
-            $cell2->addTextBox(['alignment' => Jc::START, 'width' => 230, 'height' => 70, 'borderColor' => $this->NotesTextBoxColor])
-                ->addText('Notities:');
-        }
-    }
 
     private function addFillableNotes($phpWord)
     {
