@@ -115,8 +115,7 @@
                  role="tabpanel"
                  aria-labelledby="grafieken-tab"
                  tabindex="-1">
-                <x-admin.edit-content.chart :lessonLevelPhysicalSubcategories="$lessonLevelPhysicalSubcategories"
-                    :lessonLevelOnlineSubcategories="$lessonLevelOnlineSubcategories"
+                <x-admin.edit-content.chart :lessonLevelSubcategories="$lessonLevelSubcategories"
                     :generalLessonLevelDescription="$generalLessonLevelDescription"
                     :generalModuleDescription="$generalModuleDescription"
                     />

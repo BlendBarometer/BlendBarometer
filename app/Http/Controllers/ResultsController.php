@@ -36,6 +36,15 @@ class ResultsController extends Controller
         $lessonLevelGeneralDescription = GraphDescription::select('description')->where('graph_type', 'lesson-level-general')->get();
         $lessonLevelPhysicalDescriptions = GraphDescription::select('sub_category_id', 'description')->where('graph_type', 'physical')->get();
         $lessonLevelOnlineDescriptions = GraphDescription::select('sub_category_id', 'description')->where('graph_type', 'online')->get();
+        $lessonLevelSubcategoriesGrouped = Sub_category::select('id', 'name', 'question_category_id')->whereIn('question_category_id', [1,2])->get()->groupBy('name');
+        $lessonLevelDescriptions = GraphDescription::select('graph_description.description', 'sub_category.name')
+            ->join('sub_category', 'graph_description.sub_category_id', '=', 'sub_category.id')
+            ->whereIn('graph_type', ['physical', 'online'])
+            ->get()
+            ->groupBy('name')
+            ->map(function ($group) {
+                return $group->first()->description;
+            });
         $moduleLevelGeneralDescription = GraphDescription::select('description')->where('graph_type', 'module-level-general')->get();
 
         $subCategoryPhysicalIds = Sub_category::select('id')->where('question_category_id', 1)->pluck('id')->toArray();
@@ -117,6 +126,8 @@ class ResultsController extends Controller
             'moduleLevelGeneralDescription' => $moduleLevelGeneralDescription,
             'lessonLevelPhysicalDescriptions' => $lessonLevelPhysicalDescriptions,
             'lessonLevelOnlineDescriptions' => $lessonLevelOnlineDescriptions,
+            'lessonLevelSubcategoriesGrouped' => $lessonLevelSubcategoriesGrouped,
+            'lessonLevelDescriptions' => $lessonLevelDescriptions,
             'lessonLevelDataOnline' => $lessonLevelDataOnline,
             'lessonLevelDataPhysical' => $lessonLevelDataPhysical,
             'lessonLevelDataAll' => $answers,

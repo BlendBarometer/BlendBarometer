@@ -31,7 +31,18 @@ class ReportController extends Controller
 {
     private int $pageNumber = 0;
     private SessionInfo $sessionInfo;
-    protected string $imageBasePath = 'https://blendbarometer.nl/images/';
+    protected string $imageBasePath = 'images/';
+
+    private function imagePath(string $imageName): string
+    {
+        $path = public_path("{$this->imageBasePath}{$imageName}");
+
+        if (!File::exists($path)) {
+            throw new \RuntimeException("Image not found: {$path}");
+        }
+
+        return $path;
+    }
 
     private $labelStyle = ['color' => '888888'];
     private $valueStyle = ['bold' => true];
@@ -214,7 +225,7 @@ class ReportController extends Controller
             'marginRight' => 600,
         ]);
 
-        $section->addImage("{$this->imageBasePath}report-background.png", [
+        $section->addImage($this->imagePath('report-background.png'), [
             'width' => 1000,
             'height' => 600,
             'positioning' => 'absolute',
@@ -229,8 +240,8 @@ class ReportController extends Controller
         $imgtable = $section->addTable();
         $imgtable->addRow();
 
-        $imgtable->addCell(20000)->addImage("{$this->imageBasePath}logo-avans-white.png", ['align' => Jc::START, 'width' => 100, 'height' => 30]);
-        $imgtable->addCell(20000)->addImage("{$this->imageBasePath}report-logo.png", ['align' => Jc::END, 'width' => 140, 'height' => 25]);
+        $imgtable->addCell(20000)->addImage($this->imagePath('logo-avans-white.png'), ['align' => Jc::START, 'width' => 100, 'height' => 30]);
+        $imgtable->addCell(20000)->addImage($this->imagePath('report-logo.png'), ['align' => Jc::END, 'width' => 140, 'height' => 25]);
 
         $section->addTextBreak(1);
 
@@ -241,7 +252,7 @@ class ReportController extends Controller
 
         $section->addTextBreak(1);
 
-        $section->addImage("{$this->imageBasePath}introduction_image.png", [
+        $section->addImage($this->imagePath('introduction_image.png'), [
             'alignment' => Jc::CENTER,
             'width' => 460,
             'height' => 460,
@@ -282,7 +293,7 @@ class ReportController extends Controller
             'marginRight' => 600,
         ]);
 
-        $section->addImage("{$this->imageBasePath}report-background.png", [
+        $section->addImage($this->imagePath('report-background.png'), [
             'width' => 1000,
             'height' => 600,
             'positioning' => 'absolute',
@@ -297,12 +308,12 @@ class ReportController extends Controller
         $imgtable = $section->addTable();
         $imgtable->addRow();
 
-        $imgtable->addCell(20000)->addImage("{$this->imageBasePath}logo-avans-white.png", ['align' => Jc::START, 'width' => 100, 'height' => 30]);
-        $imgtable->addCell(20000)->addImage("{$this->imageBasePath}report-logo.png", ['align' => Jc::END, 'width' => 140, 'height' => 25]);
+        $imgtable->addCell(20000)->addImage($this->imagePath('logo-avans-white.png'), ['align' => Jc::START, 'width' => 100, 'height' => 30]);
+        $imgtable->addCell(20000)->addImage($this->imagePath('report-logo.png'), ['align' => Jc::END, 'width' => 140, 'height' => 25]);
 
         $section->addTextBreak(3);
 
-        $section->addImage("{$this->imageBasePath}introduction_image.png", [
+        $section->addImage($this->imagePath('introduction_image.png'), [
             'alignment' => Jc::CENTER,
             'width' => 460,
             'height' => 460,
@@ -331,7 +342,7 @@ class ReportController extends Controller
             'lineHeight' => 1.5,
         ]);
 
-        $table->addCell(3500)->addImage("{$this->imageBasePath}barometer-report.png", [
+        $table->addCell(3500)->addImage($this->imagePath('barometer-report.png'), [
             'alignment' => Jc::CENTER,
             'width' => 100,
             'height' => 100,
@@ -458,7 +469,7 @@ class ReportController extends Controller
         $page->addTitle('Inhoudsopgave', 1, $this->pageNumber);
         $page->addTOC();
 
-        $page->addImage("{$this->imageBasePath}barometer-report-2.png", [
+        $page->addImage($this->imagePath('barometer-report-2.png'), [
             'width' => 220,
             'height' => 220,
             'alignment' => Jc::CENTER,
@@ -539,7 +550,7 @@ class ReportController extends Controller
         $imageRelativePathWheelOutside = "images/temp/{$tempId}_wheelOutside.png";
         $imagePathWheelOutside = Storage::disk('public')->path($imageRelativePathWheelOutside);
 
-        $imagePathWheelBarometerOutside = "{$this->imageBasePath}barometer-transparent.png";
+        $imagePathWheelBarometerOutside = $this->imagePath('barometer-transparent.png');
 
         if (!file_exists($imagePathWheelInside) || !file_exists($imagePathWheelOutside)) {
             $page->addText('Grafiek niet gevonden.');
@@ -759,7 +770,7 @@ class ReportController extends Controller
         $footerTable = $footer->addTable(['alignment' => Jc::CENTER]);
         $footerTable->addRow();
 
-        $footerTable->addCell(4000)->addImage("{$this->imageBasePath}logo.png", [
+        $footerTable->addCell(4000)->addImage($this->imagePath('logo.png'), [
             'width' => 90,
             'height' => 16,
             'alignment' => Jc::START,
