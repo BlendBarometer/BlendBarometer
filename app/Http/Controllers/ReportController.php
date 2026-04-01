@@ -43,6 +43,11 @@ class ReportController extends Controller
     public function sendReport()
     {
         $this->sessionInfo = $this->extractSessionInfo();
+        $moduleInformationValues = $this->resolveModuleInformationValuesByKey([
+            'summary' => $this->sessionInfo->summary,
+            'goals' => $this->sessionInfo->goals,
+            'evaluation' => $this->sessionInfo->evaluation,
+        ]);
 
         ['tempFile' => $tempFile, 'fileName' => $fileName] = $this->generateReport();
 
@@ -93,9 +98,9 @@ class ReportController extends Controller
                 'academy' => $academy,
                 'module' => $this->sessionInfo->module,
                 'date' => now()->format('d-m-Y'),
-                'summary' => $this->sessionInfo->summary,
-                'goals' => $this->sessionInfo->goals,
-                'evaluation' => $this->sessionInfo->evaluation,
+                'summary' => $moduleInformationValues['summary'],
+                'goals' => $moduleInformationValues['goals'],
+                'evaluation' => $moduleInformationValues['evaluation'],
             ])->render();
 
             $mail->Body = $html;
@@ -176,6 +181,12 @@ class ReportController extends Controller
 
     private function extractSessionInfo(): SessionInfo
     {
+        $moduleInformationValues = $this->resolveModuleInformationValuesByKey([
+            'summary' => (string) session('summary', ''),
+            'goals' => (string) session('goals', ''),
+            'evaluation' => (string) session('evaluation', ''),
+        ]);
+
         return new SessionInfo(
             name: $this->sanitizeReportText((string) session('name', '')),
             email: $this->sanitizeReportText((string) session('email', '')),
@@ -183,9 +194,9 @@ class ReportController extends Controller
             academyAbbreviation: $this->sanitizeReportText((string) session('academy-abbreviation', '')),
             module: $this->sanitizeReportText((string) session('module', '')),
             course: $this->sanitizeReportText((string) session('course', '')),
-            summary: $this->sanitizeReportText((string) session('summary', '')),
-            goals: $this->sanitizeReportText((string) session('goals', '')),
-            evaluation: $this->sanitizeReportText((string) session('evaluation', '')),
+            summary: $this->sanitizeReportText($moduleInformationValues['summary']),
+            goals: $this->sanitizeReportText($moduleInformationValues['goals']),
+            evaluation: $this->sanitizeReportText($moduleInformationValues['evaluation']),
             sessionUid: $this->sanitizeReportText((string) session('session_uid', '')),
         );
     }
@@ -358,21 +369,8 @@ class ReportController extends Controller
 
     private function getModuleSubjectEntries(): array
     {
-        if (!Schema::hasTable('module_information_field') || !Schema::hasTable('module_information_answer')) {
-            return [
-                ['title' => 'Samenvatting module', 'content' => $this->sessionInfo->summary],
-                ['title' => 'Leeruitkomsten module', 'content' => $this->sessionInfo->goals],
-                ['title' => 'Toetsing module', 'content' => $this->sessionInfo->evaluation],
-            ];
-        }
-
-        $fields = ModuleInformationField::query()
-            ->where('is_active', true)
-            ->orderBy('sort_order')
-            ->orderBy('id')
-            ->get();
-
-        if ($fields->isEmpty()) {
+        $fields = $this->getActiveModuleInformationFields();
+        if ($fields === null) {
             return [
                 ['title' => 'Samenvatting module', 'content' => $this->sessionInfo->summary],
                 ['title' => 'Leeruitkomsten module', 'content' => $this->sessionInfo->goals],
@@ -409,6 +407,46 @@ class ReportController extends Controller
             'evaluation' => $this->sessionInfo->evaluation,
             default => '',
         };
+    }
+
+    private function getActiveModuleInformationFields(): ?\Illuminate\Support\Collection
+    {
+        if (!Schema::hasTable('module_information_field') || !Schema::hasTable('module_information_answer')) {
+            return null;
+        }
+
+        $fields = ModuleInformationField::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
+        return $fields->isEmpty() ? null : $fields;
+    }
+
+    private function resolveModuleInformationValuesByKey(array $fallbackValues): array
+    {
+        $fields = $this->getActiveModuleInformationFields();
+        if ($fields === null || !Auth::check()) {
+            return $fallbackValues;
+        }
+
+        $matchingFields = $fields->whereIn('key', array_keys($fallbackValues));
+        if ($matchingFields->isEmpty()) {
+            return $fallbackValues;
+        }
+
+        $answersByField = ModuleInformationAnswer::query()
+            ->where('user_id', Auth::id())
+            ->whereIn('module_information_field_id', $matchingFields->pluck('id'))
+            ->pluck('answer', 'module_information_field_id')
+            ->toArray();
+
+        foreach ($matchingFields as $field) {
+            $fallbackValues[$field->key] = (string) ($answersByField[$field->id] ?? $fallbackValues[$field->key]);
+        }
+
+        return $fallbackValues;
     }
 
     private function addTableOfContents($phpWord)

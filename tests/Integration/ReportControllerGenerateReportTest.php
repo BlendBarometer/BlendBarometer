@@ -352,19 +352,49 @@ class ReportControllerGenerateReportTest extends TestCase
         $user = User::factory()->create();
         $this->actingAs($user);
 
-        $field = ModuleInformationField::create([
+        $summaryField = ModuleInformationField::create([
             'key' => 'summary',
-            'title' => 'Eigen titel vanuit admin',
+            'title' => 'Eigen samenvatting titel',
             'placeholder' => 'Niet relevant voor rapport',
             'maxlength' => 2000,
             'sort_order' => 1,
             'is_active' => true,
         ]);
 
+        $goalsField = ModuleInformationField::create([
+            'key' => 'goals',
+            'title' => 'Eigen leeruitkomsten titel',
+            'placeholder' => 'Niet relevant voor rapport',
+            'maxlength' => 2000,
+            'sort_order' => 2,
+            'is_active' => true,
+        ]);
+
+        $evaluationField = ModuleInformationField::create([
+            'key' => 'evaluation',
+            'title' => 'Eigen toetsing titel',
+            'placeholder' => 'Niet relevant voor rapport',
+            'maxlength' => 2000,
+            'sort_order' => 3,
+            'is_active' => true,
+        ]);
+
         ModuleInformationAnswer::create([
             'user_id' => $user->id,
-            'module_information_field_id' => $field->id,
-            'answer' => 'Antwoord uit database',
+            'module_information_field_id' => $summaryField->id,
+            'answer' => 'Samenvatting uit database',
+        ]);
+
+        ModuleInformationAnswer::create([
+            'user_id' => $user->id,
+            'module_information_field_id' => $goalsField->id,
+            'answer' => 'Leeruitkomsten uit database',
+        ]);
+
+        ModuleInformationAnswer::create([
+            'user_id' => $user->id,
+            'module_information_field_id' => $evaluationField->id,
+            'answer' => 'Toetsing uit database',
         ]);
 
         $tempFile = null;
@@ -377,8 +407,61 @@ class ReportControllerGenerateReportTest extends TestCase
             $this->assertDocxIntegrity($tempFile);
 
             $xml = $this->readDocumentXml($tempFile);
-            $this->assertStringContainsString('Eigen titel vanuit admin', $xml);
-            $this->assertStringContainsString('Antwoord uit database', $xml);
+            $this->assertStringContainsString('Eigen samenvatting titel', $xml);
+            $this->assertStringContainsString('Samenvatting uit database', $xml);
+            $this->assertStringContainsString('Eigen leeruitkomsten titel', $xml);
+            $this->assertStringContainsString('Leeruitkomsten uit database', $xml);
+            $this->assertStringContainsString('Eigen toetsing titel', $xml);
+            $this->assertStringContainsString('Toetsing uit database', $xml);
+
+            $this->saveReportArtifactIfEnabled($tempFile, 'last-db-module-info-report.docx');
+        } finally {
+            if ($tempFile !== null) {
+                @unlink($tempFile);
+            }
+            $this->cleanupFixtureImages();
+            $this->cleanupStaticFixtureImages();
+        }
+    }
+
+    public function test_generate_report_falls_back_to_session_values_when_module_information_database_is_empty(): void
+    {
+        $this->seedDatabase();
+        $this->createStaticFixtureImages();
+        $this->createFixtureImages();
+
+        // No module_information_field rows are created here by design.
+        $legacySessionInfo = new SessionInfo(
+            name: 'Fallback Teacher',
+            email: 'fallback.teacher@example.com',
+            academy: 'Fallback Academy',
+            academyAbbreviation: 'FA',
+            module: 'Fallback Module',
+            course: 'Fallback Course',
+            summary: 'Fallback samenvatting tekst',
+            goals: 'Fallback leeruitkomsten tekst',
+            evaluation: 'Fallback toetsing tekst',
+            sessionUid: self::SESSION_UID,
+        );
+
+        $tempFile = null;
+
+        try {
+            $result = $this->invokeGenerateReport($legacySessionInfo);
+            $tempFile = $result['tempFile'];
+
+            $this->assertFileExists($tempFile);
+            $this->assertDocxIntegrity($tempFile);
+
+            $xml = $this->readDocumentXml($tempFile);
+            $this->assertStringContainsString('Samenvatting module', $xml);
+            $this->assertStringContainsString('Fallback samenvatting tekst', $xml);
+            $this->assertStringContainsString('Leeruitkomsten module', $xml);
+            $this->assertStringContainsString('Fallback leeruitkomsten tekst', $xml);
+            $this->assertStringContainsString('Toetsing module', $xml);
+            $this->assertStringContainsString('Fallback toetsing tekst', $xml);
+
+            $this->saveReportArtifactIfEnabled($tempFile, 'last-fallback-module-info-report.docx');
         } finally {
             if ($tempFile !== null) {
                 @unlink($tempFile);
