@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Database\Seeders;
@@ -11,7 +12,7 @@ class EmailRuleSeeder extends Seeder
     public function run(): void
     {
         EmailRule::firstOrCreate(
-            ['academy_name' => null, 'email' => 'ik.dejong@student.avans.nl']
+            ['academy_name' => null, 'email' => 'blendstudioavans@gmail.com']
         );
     }
 }
