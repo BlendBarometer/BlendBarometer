@@ -6,10 +6,13 @@ use App\Data\SessionInfo;
 use App\Models\Content;
 use App\Models\Graph_legenda;
 use App\Models\GraphDescription;
+use App\Models\ModuleInformationAnswer;
+use App\Models\ModuleInformationField;
 use App\Models\Module_level_answer;
 use App\Models\Question;
 use App\Models\Question_category;
 use App\Models\Sub_category;
+use App\Models\User;
 use App\Support\Whitespace;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -35,6 +38,8 @@ class ReportControllerGenerateReportTest extends TestCase
             module: 'Test Module',
             course: 'Test Course',
             summary: 'This is a test summary for the module.',
+            goals: 'This module has test learning goals.',
+            evaluation: 'This module uses test evaluation methods.',
             sessionUid: self::SESSION_UID,
         );
     }
@@ -207,19 +212,22 @@ class ReportControllerGenerateReportTest extends TestCase
         $this->createStaticFixtureImages();
         $this->createFixtureImages();
 
+        $tempFile = null;
+
         try {
             $result = $this->invokeGenerateReport();
+            $tempFile = $result['tempFile'];
 
             // Basic structure
             $this->assertArrayHasKey('tempFile', $result);
             $this->assertArrayHasKey('fileName', $result);
-            $this->assertFileExists($result['tempFile']);
+            $this->assertFileExists($tempFile);
             $this->assertStringStartsWith('BlendBarometer rapport Test Module ', $result['fileName']);
             $this->assertStringEndsWith('.docx', $result['fileName']);
 
-            $this->assertDocxIntegrity($result['tempFile']);
+            $this->assertDocxIntegrity($tempFile);
 
-            $xml = $this->readDocumentXml($result['tempFile']);
+            $xml = $this->readDocumentXml($tempFile);
 
             // Front page
             $this->assertStringContainsString('Tussenrapport', $xml);
@@ -250,19 +258,11 @@ class ReportControllerGenerateReportTest extends TestCase
             // Verify no missing-graph fallbacks appeared
             $this->assertStringNotContainsString('Grafiek niet gevonden', $xml);
 
-            if (env('SAVE_REPORT_TEST_ARTIFACT', false)) {
-                $target = storage_path('app/testing/last-integration-report.docx');
-                @mkdir(dirname($target), 0777, true);
-                @unlink($target);
-                if (@copy($result['tempFile'], $target)) {
-                    fwrite(STDOUT, PHP_EOL . 'Saved report to: ' . $target . PHP_EOL);
-                } else {
-                    fwrite(STDOUT, PHP_EOL . 'Could not save report artifact to: ' . $target . PHP_EOL);
-                }
-            }
-
-            @unlink($result['tempFile']);
+            $this->saveReportArtifactIfEnabled($tempFile, 'last-integration-report.docx');
         } finally {
+            if ($tempFile !== null) {
+                @unlink($tempFile);
+            }
             $this->cleanupFixtureImages();
             $this->cleanupStaticFixtureImages();
         }
@@ -274,13 +274,16 @@ class ReportControllerGenerateReportTest extends TestCase
         $this->createStaticFixtureImages();
         // Deliberately do NOT create chart fixture images
 
+        $tempFile = null;
+
         try {
             $result = $this->invokeGenerateReport();
+            $tempFile = $result['tempFile'];
 
-            $this->assertFileExists($result['tempFile']);
-            $this->assertDocxIntegrity($result['tempFile']);
+            $this->assertFileExists($tempFile);
+            $this->assertDocxIntegrity($tempFile);
 
-            $xml = $this->readDocumentXml($result['tempFile']);
+            $xml = $this->readDocumentXml($tempFile);
 
             // Should still contain page structure
             $this->assertStringContainsString('Inhoudsopgave', $xml);
@@ -288,9 +291,10 @@ class ReportControllerGenerateReportTest extends TestCase
 
             // Should show fallback text for missing charts
             $this->assertStringContainsString('Grafiek niet gevonden', $xml);
-
-            @unlink($result['tempFile']);
         } finally {
+            if ($tempFile !== null) {
+                @unlink($tempFile);
+            }
             $this->cleanupStaticFixtureImages();
         }
     }
@@ -309,33 +313,160 @@ class ReportControllerGenerateReportTest extends TestCase
             module: 'Module: QA/Stress *Test*',
             course: "Course met unicode Ω en emoji 🚀",
             summary: "Samenvatting met lastige tekens: <tag * & \"quotes\' \` en control" . chr(7) . "\nNieuwe regel",
+            goals: "Leeruitkomsten met unicode Ω en speciale tekens <&>",
+            evaluation: "Toetsing met speciale tekens <&> en control" . chr(8),
             sessionUid: self::SESSION_UID,
         );
 
+        $tempFile = null;
+
         try {
             $result = $this->invokeGenerateReport($complexSessionInfo);
+            $tempFile = $result['tempFile'];
 
-            $this->assertFileExists($result['tempFile']);
-            $this->assertDocxIntegrity($result['tempFile']);
+            $this->assertFileExists($tempFile);
+            $this->assertDocxIntegrity($tempFile);
             $this->assertStringNotContainsString(':', $result['fileName']);
             $this->assertStringNotContainsString('/', $result['fileName']);
             $this->assertStringNotContainsString('*', $result['fileName']);
 
-            $xml = $this->readDocumentXml($result['tempFile']);
+            $xml = $this->readDocumentXml($tempFile);
             $this->assertStringContainsString('Academie', $xml);
             $this->assertStringContainsString('Resultaten', $xml);
 
-            if (env('SAVE_REPORT_TEST_ARTIFACT', false)) {
-                $target = storage_path('app/testing/last-complex-report.docx');
-                @mkdir(dirname($target), 0777, true);
-                if (@copy($result['tempFile'], $target)) {
-                    fwrite(STDOUT, PHP_EOL . 'Saved report to: ' . $target . PHP_EOL);
-                } else {
-                    fwrite(STDOUT, PHP_EOL . 'Could not save report artifact to: ' . $target . PHP_EOL);
-                }
-            }
-            @unlink($target);
+            $this->saveReportArtifactIfEnabled($tempFile, 'last-complex-report.docx');
         } finally {
+            if ($tempFile !== null) {
+                @unlink($tempFile);
+            }
+            $this->cleanupFixtureImages();
+            $this->cleanupStaticFixtureImages();
+        }
+    }
+
+    public function test_generate_report_uses_database_driven_module_information_titles_and_answers(): void
+    {
+        $this->seedDatabase();
+        $this->createStaticFixtureImages();
+        $this->createFixtureImages();
+
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $summaryField = ModuleInformationField::create([
+            'key' => 'summary',
+            'title' => 'Eigen samenvatting titel',
+            'placeholder' => 'Niet relevant voor rapport',
+            'maxlength' => 2000,
+            'sort_order' => 1,
+            'is_active' => true,
+        ]);
+
+        $goalsField = ModuleInformationField::create([
+            'key' => 'goals',
+            'title' => 'Eigen leeruitkomsten titel',
+            'placeholder' => 'Niet relevant voor rapport',
+            'maxlength' => 2000,
+            'sort_order' => 2,
+            'is_active' => true,
+        ]);
+
+        $evaluationField = ModuleInformationField::create([
+            'key' => 'evaluation',
+            'title' => 'Eigen toetsing titel',
+            'placeholder' => 'Niet relevant voor rapport',
+            'maxlength' => 2000,
+            'sort_order' => 3,
+            'is_active' => true,
+        ]);
+
+        ModuleInformationAnswer::create([
+            'user_id' => $user->id,
+            'module_information_field_id' => $summaryField->id,
+            'answer' => 'Samenvatting uit database',
+        ]);
+
+        ModuleInformationAnswer::create([
+            'user_id' => $user->id,
+            'module_information_field_id' => $goalsField->id,
+            'answer' => 'Leeruitkomsten uit database',
+        ]);
+
+        ModuleInformationAnswer::create([
+            'user_id' => $user->id,
+            'module_information_field_id' => $evaluationField->id,
+            'answer' => 'Toetsing uit database',
+        ]);
+
+        $tempFile = null;
+
+        try {
+            $result = $this->invokeGenerateReport();
+            $tempFile = $result['tempFile'];
+
+            $this->assertFileExists($tempFile);
+            $this->assertDocxIntegrity($tempFile);
+
+            $xml = $this->readDocumentXml($tempFile);
+            $this->assertStringContainsString('Eigen samenvatting titel', $xml);
+            $this->assertStringContainsString('Samenvatting uit database', $xml);
+            $this->assertStringContainsString('Eigen leeruitkomsten titel', $xml);
+            $this->assertStringContainsString('Leeruitkomsten uit database', $xml);
+            $this->assertStringContainsString('Eigen toetsing titel', $xml);
+            $this->assertStringContainsString('Toetsing uit database', $xml);
+
+            $this->saveReportArtifactIfEnabled($tempFile, 'last-db-module-info-report.docx');
+        } finally {
+            if ($tempFile !== null) {
+                @unlink($tempFile);
+            }
+            $this->cleanupFixtureImages();
+            $this->cleanupStaticFixtureImages();
+        }
+    }
+
+    public function test_generate_report_falls_back_to_session_values_when_module_information_database_is_empty(): void
+    {
+        $this->seedDatabase();
+        $this->createStaticFixtureImages();
+        $this->createFixtureImages();
+
+        // No module_information_field rows are created here by design.
+        $legacySessionInfo = new SessionInfo(
+            name: 'Fallback Teacher',
+            email: 'fallback.teacher@example.com',
+            academy: 'Fallback Academy',
+            academyAbbreviation: 'FA',
+            module: 'Fallback Module',
+            course: 'Fallback Course',
+            summary: 'Fallback samenvatting tekst',
+            goals: 'Fallback leeruitkomsten tekst',
+            evaluation: 'Fallback toetsing tekst',
+            sessionUid: self::SESSION_UID,
+        );
+
+        $tempFile = null;
+
+        try {
+            $result = $this->invokeGenerateReport($legacySessionInfo);
+            $tempFile = $result['tempFile'];
+
+            $this->assertFileExists($tempFile);
+            $this->assertDocxIntegrity($tempFile);
+
+            $xml = $this->readDocumentXml($tempFile);
+            $this->assertStringContainsString('Samenvatting module', $xml);
+            $this->assertStringContainsString('Fallback samenvatting tekst', $xml);
+            $this->assertStringContainsString('Leeruitkomsten module', $xml);
+            $this->assertStringContainsString('Fallback leeruitkomsten tekst', $xml);
+            $this->assertStringContainsString('Toetsing module', $xml);
+            $this->assertStringContainsString('Fallback toetsing tekst', $xml);
+
+            $this->saveReportArtifactIfEnabled($tempFile, 'last-fallback-module-info-report.docx');
+        } finally {
+            if ($tempFile !== null) {
+                @unlink($tempFile);
+            }
             $this->cleanupFixtureImages();
             $this->cleanupStaticFixtureImages();
         }

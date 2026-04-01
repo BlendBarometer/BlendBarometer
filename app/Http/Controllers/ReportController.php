@@ -5,13 +5,17 @@ namespace App\Http\Controllers;
 use App\Data\SessionInfo;
 use App\Models\Content;
 use App\Models\GraphDescription;
+use App\Models\ModuleInformationAnswer;
+use App\Models\ModuleInformationField;
 use App\Models\Question_category;
 use App\Models\Sub_category;
 use App\Models\EmailRule;
 use App\Support\Whitespace;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Log;
@@ -40,6 +44,11 @@ class ReportController extends Controller
     public function sendReport()
     {
         $this->sessionInfo = $this->extractSessionInfo();
+        $moduleInformationValues = $this->resolveModuleInformationValuesByKey([
+            'summary' => $this->sessionInfo->summary,
+            'goals' => $this->sessionInfo->goals,
+            'evaluation' => $this->sessionInfo->evaluation,
+        ]);
 
         ['tempFile' => $tempFile, 'fileName' => $fileName] = $this->generateReport();
 
@@ -90,7 +99,9 @@ class ReportController extends Controller
                 'academy' => $academy,
                 'module' => $this->sessionInfo->module,
                 'date' => now()->format('d-m-Y'),
-                'summary' => $this->sessionInfo->summary,
+                'summary' => $moduleInformationValues['summary'],
+                'goals' => $moduleInformationValues['goals'],
+                'evaluation' => $moduleInformationValues['evaluation'],
             ])->render();
 
             $mail->Body = $html;
@@ -171,6 +182,12 @@ class ReportController extends Controller
 
     private function extractSessionInfo(): SessionInfo
     {
+        $moduleInformationValues = $this->resolveModuleInformationValuesByKey([
+            'summary' => (string) session('summary', ''),
+            'goals' => (string) session('goals', ''),
+            'evaluation' => (string) session('evaluation', ''),
+        ]);
+
         return new SessionInfo(
             name: $this->sanitizeReportText((string) session('name', '')),
             email: $this->sanitizeReportText((string) session('email', '')),
@@ -178,7 +195,9 @@ class ReportController extends Controller
             academyAbbreviation: $this->sanitizeReportText((string) session('academy-abbreviation', '')),
             module: $this->sanitizeReportText((string) session('module', '')),
             course: $this->sanitizeReportText((string) session('course', '')),
-            summary: $this->sanitizeReportText((string) session('summary', '')),
+            summary: $this->sanitizeReportText($moduleInformationValues['summary']),
+            goals: $this->sanitizeReportText($moduleInformationValues['goals']),
+            evaluation: $this->sanitizeReportText($moduleInformationValues['evaluation']),
             sessionUid: $this->sanitizeReportText((string) session('session_uid', '')),
         );
     }
@@ -292,7 +311,7 @@ class ReportController extends Controller
 
     private function addInformationPage($phpWord)
     {
-        $page = $this->createpage($phpWord);
+        $page = $this->createPage($phpWord);
         $this->addStandardHeaderFooter($page);
 
         $page->addTextBreak(1);
@@ -326,12 +345,109 @@ class ReportController extends Controller
             'lineHeight' => 1.5,
         ]);
 
-        $page->addTitle('Samenvatting module', 2, $this->pageNumber);
+        $this->addModuleSubjectSections($page);
+    }
 
-        $page->addText($this->sessionInfo->summary, [
+    private function addModuleSubjectSections($page): void
+    {
+        foreach ($this->getModuleSubjectEntries() as $entry) {
+            $this->addModuleSubjectSection($page, $entry['title'], $entry['content']);
+        }
+    }
+
+    private function addModuleSubjectSection($page, string $title, string $content): void
+    {
+        if (trim($content) === '') {
+            return;
+        }
+
+        $page->addTitle($title, 2, $this->pageNumber);
+        $page->addText($content, [
             'color' => '888888',
             'lineHeight' => 1.5,
         ]);
+    }
+
+    private function getModuleSubjectEntries(): array
+    {
+        $fields = $this->getActiveModuleInformationFields();
+        if ($fields === null) {
+            return [
+                ['title' => 'Samenvatting module', 'content' => $this->sessionInfo->summary],
+                ['title' => 'Leeruitkomsten module', 'content' => $this->sessionInfo->goals],
+                ['title' => 'Toetsing module', 'content' => $this->sessionInfo->evaluation],
+            ];
+        }
+
+        $answersByField = [];
+
+        if (Auth::check()) {
+            $answersByField = ModuleInformationAnswer::query()
+                ->where('user_id', Auth::id())
+                ->whereIn('module_information_field_id', $fields->pluck('id'))
+                ->pluck('answer', 'module_information_field_id')
+                ->toArray();
+        }
+
+        return $fields->map(function (ModuleInformationField $field) use ($answersByField): array {
+            $fallback = $this->getFallbackModuleSubjectValue($field->key);
+            $content = (string) ($answersByField[$field->id] ?? session($field->key, $fallback));
+
+            return [
+                'title' => $this->sanitizeReportText($field->title),
+                'content' => $this->sanitizeReportText($content),
+            ];
+        })->all();
+    }
+
+    private function getFallbackModuleSubjectValue(string $key): string
+    {
+        return match ($key) {
+            'summary' => $this->sessionInfo->summary,
+            'goals' => $this->sessionInfo->goals,
+            'evaluation' => $this->sessionInfo->evaluation,
+            default => '',
+        };
+    }
+
+    private function getActiveModuleInformationFields(): ?\Illuminate\Support\Collection
+    {
+        if (!Schema::hasTable('module_information_field') || !Schema::hasTable('module_information_answer')) {
+            return null;
+        }
+
+        $fields = ModuleInformationField::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
+        return $fields->isEmpty() ? null : $fields;
+    }
+
+    private function resolveModuleInformationValuesByKey(array $fallbackValues): array
+    {
+        $fields = $this->getActiveModuleInformationFields();
+        if ($fields === null || !Auth::check()) {
+            return $fallbackValues;
+        }
+
+        $matchingFields = $fields->whereIn('key', array_keys($fallbackValues));
+        if ($matchingFields->isEmpty()) {
+            return $fallbackValues;
+        }
+
+        $answersByField = ModuleInformationAnswer::query()
+            ->where('user_id', Auth::id())
+            ->whereIn('module_information_field_id', $matchingFields->pluck('id'))
+            ->pluck('answer', 'module_information_field_id')
+            ->toArray();
+
+        foreach ($matchingFields as $field) {
+            $fallbackValues[$field->key] = (string) ($answersByField[$field->id] ?? $fallbackValues[$field->key]);
+        }
+
+        return $fallbackValues;
     }
 
     private function addTableOfContents($phpWord)

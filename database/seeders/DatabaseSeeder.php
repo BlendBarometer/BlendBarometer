@@ -28,6 +28,7 @@ class DatabaseSeeder extends Seeder
         $this->call(EmailRuleSeeder::class);
         $this->call(RoleSeeder::class);
         $this->call(GraphLegendaSeeder::class);
+        $this->call(ModuleInformationFieldSeeder::class);
 
         Schema::enableForeignKeyConstraints();
     }

@@ -55,6 +55,11 @@
 
         <section class="py-4">
             <h2 class="fs-4">Module gegevens</h2>
+
+            @php
+                $moduleInformationAnswers ??= [];
+            @endphp
+
             <div class="row w-50">
                 <div class="col pe-0">
                     <label for="module">Module</label>
@@ -63,17 +68,15 @@
                 </div>
             </div>
 
-            <div class="mt-4">
-                <label for="summary">Samenvatting</label>
-                <textarea class="form-control @error('summary') is-invalid @enderror" rows="4" name="summary"
-                          id="summary" maxlength="2000"
-                          placeholder="bv. Studenten leren programmeren in Java">{{ old('summary', session('summary')) }}</textarea>
-                @error('summary')
-                <div class="invalid-feedback">
-                    tekst mag maximaal 2000 tekens bevatten
-                </div>
-                @enderror
-            </div>
+            @foreach ($moduleInformationFields as $field)
+                <x-textarea-field
+                    :name="$field->key"
+                    :label="$field->title"
+                    :value="old($field->key, $moduleInformationAnswers[$field->id] ?? session($field->key))"
+                    :placeholder="$field->placeholder"
+                    :maxlength="$field->maxlength"
+                />
+            @endforeach
         </section>
 
         <x-navigation-buttons-with-submit :previous="$previous ?? route('intermediate.view', 'gegevens')"/>
