@@ -114,8 +114,8 @@
         integrity="sha512-JPcRR8yFa8mmCsfrw4TNte1ZvF1e3+1SdGMslZvmrzDYxS69J7J49vkFL8u6u8PlPJK+H3voElBtUCzaXj+6ig=="
         crossorigin="anonymous"
         referrerpolicy="no-referrer"></script>
-<script src={{ URL::asset('js/custom-tooltip.js') }}></script>
-<script src={{ URL::asset('js/results-graphs.js') }}></script>
+<script src="{{ URL::asset('js/custom-tooltip.js') }}?v={{ filemtime(public_path('js/custom-tooltip.js')) }}"></script>
+<script src="{{ URL::asset('js/results-graphs.js') }}?v={{ filemtime(public_path('js/results-graphs.js')) }}"></script>
 
 <script>
     document.addEventListener("keydown", (e) => {
