@@ -34,6 +34,8 @@ class ReportControllerGenerateReportTest extends TestCase
             module: 'Test Module',
             course: 'Test Course',
             summary: 'This is a test summary for the module.',
+            goals: 'This module has test learning goals.',
+            evaluation: 'This module uses test evaluation methods.',
             sessionUid: self::SESSION_UID,
         );
     }
@@ -206,19 +208,22 @@ class ReportControllerGenerateReportTest extends TestCase
         $this->createStaticFixtureImages();
         $this->createFixtureImages();
 
+        $tempFile = null;
+
         try {
             $result = $this->invokeGenerateReport();
+            $tempFile = $result['tempFile'];
 
             // Basic structure
             $this->assertArrayHasKey('tempFile', $result);
             $this->assertArrayHasKey('fileName', $result);
-            $this->assertFileExists($result['tempFile']);
+            $this->assertFileExists($tempFile);
             $this->assertStringStartsWith('BlendBarometer rapport Test Module ', $result['fileName']);
             $this->assertStringEndsWith('.docx', $result['fileName']);
 
-            $this->assertDocxIntegrity($result['tempFile']);
+            $this->assertDocxIntegrity($tempFile);
 
-            $xml = $this->readDocumentXml($result['tempFile']);
+            $xml = $this->readDocumentXml($tempFile);
 
             // Front page
             $this->assertStringContainsString('Tussenrapport', $xml);
@@ -249,19 +254,11 @@ class ReportControllerGenerateReportTest extends TestCase
             // Verify no missing-graph fallbacks appeared
             $this->assertStringNotContainsString('Grafiek niet gevonden', $xml);
 
-            if (env('SAVE_REPORT_TEST_ARTIFACT', false)) {
-                $target = storage_path('app/testing/last-integration-report.docx');
-                @mkdir(dirname($target), 0777, true);
-                @unlink($target);
-                if (@copy($result['tempFile'], $target)) {
-                    fwrite(STDOUT, PHP_EOL . 'Saved report to: ' . $target . PHP_EOL);
-                } else {
-                    fwrite(STDOUT, PHP_EOL . 'Could not save report artifact to: ' . $target . PHP_EOL);
-                }
-            }
-
-            @unlink($result['tempFile']);
+            $this->saveReportArtifactIfEnabled($tempFile, 'last-integration-report.docx');
         } finally {
+            if ($tempFile !== null) {
+                @unlink($tempFile);
+            }
             $this->cleanupFixtureImages();
             $this->cleanupStaticFixtureImages();
         }
@@ -273,13 +270,16 @@ class ReportControllerGenerateReportTest extends TestCase
         $this->createStaticFixtureImages();
         // Deliberately do NOT create chart fixture images
 
+        $tempFile = null;
+
         try {
             $result = $this->invokeGenerateReport();
+            $tempFile = $result['tempFile'];
 
-            $this->assertFileExists($result['tempFile']);
-            $this->assertDocxIntegrity($result['tempFile']);
+            $this->assertFileExists($tempFile);
+            $this->assertDocxIntegrity($tempFile);
 
-            $xml = $this->readDocumentXml($result['tempFile']);
+            $xml = $this->readDocumentXml($tempFile);
 
             // Should still contain page structure
             $this->assertStringContainsString('Inhoudsopgave', $xml);
@@ -287,9 +287,10 @@ class ReportControllerGenerateReportTest extends TestCase
 
             // Should show fallback text for missing charts
             $this->assertStringContainsString('Grafiek niet gevonden', $xml);
-
-            @unlink($result['tempFile']);
         } finally {
+            if ($tempFile !== null) {
+                @unlink($tempFile);
+            }
             $this->cleanupStaticFixtureImages();
         }
     }
@@ -308,33 +309,32 @@ class ReportControllerGenerateReportTest extends TestCase
             module: 'Module: QA/Stress *Test*',
             course: "Course met unicode Ω en emoji 🚀",
             summary: "Samenvatting met lastige tekens: <tag * & \"quotes\' \` en control" . chr(7) . "\nNieuwe regel",
+            goals: "Leeruitkomsten met unicode Ω en speciale tekens <&>",
+            evaluation: "Toetsing met speciale tekens <&> en control" . chr(8),
             sessionUid: self::SESSION_UID,
         );
 
+        $tempFile = null;
+
         try {
             $result = $this->invokeGenerateReport($complexSessionInfo);
+            $tempFile = $result['tempFile'];
 
-            $this->assertFileExists($result['tempFile']);
-            $this->assertDocxIntegrity($result['tempFile']);
+            $this->assertFileExists($tempFile);
+            $this->assertDocxIntegrity($tempFile);
             $this->assertStringNotContainsString(':', $result['fileName']);
             $this->assertStringNotContainsString('/', $result['fileName']);
             $this->assertStringNotContainsString('*', $result['fileName']);
 
-            $xml = $this->readDocumentXml($result['tempFile']);
+            $xml = $this->readDocumentXml($tempFile);
             $this->assertStringContainsString('Academie', $xml);
             $this->assertStringContainsString('Resultaten', $xml);
 
-            if (env('SAVE_REPORT_TEST_ARTIFACT', false)) {
-                $target = storage_path('app/testing/last-complex-report.docx');
-                @mkdir(dirname($target), 0777, true);
-                if (@copy($result['tempFile'], $target)) {
-                    fwrite(STDOUT, PHP_EOL . 'Saved report to: ' . $target . PHP_EOL);
-                } else {
-                    fwrite(STDOUT, PHP_EOL . 'Could not save report artifact to: ' . $target . PHP_EOL);
-                }
-            }
-            @unlink($target);
+            $this->saveReportArtifactIfEnabled($tempFile, 'last-complex-report.docx');
         } finally {
+            if ($tempFile !== null) {
+                @unlink($tempFile);
+            }
             $this->cleanupFixtureImages();
             $this->cleanupStaticFixtureImages();
         }

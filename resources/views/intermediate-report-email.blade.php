@@ -23,6 +23,8 @@
                     <li><strong>Datum:</strong> {{ $date }}</li>
                 </ul>
                 <p><strong>Module Samenvatting:</strong> <br>{{ $summary }}</p>
+                <p><strong>Leeruitkomsten:</strong> <br>{{ $goals }}</p>
+                <p><strong>Toetsing:</strong> <br>{{ $evaluation }}</p>
                 <br>
                 <p class="mb-2">Het rapport staat in de bijlage van deze email.</p>
                 <hr>

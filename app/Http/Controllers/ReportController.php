@@ -90,6 +90,8 @@ class ReportController extends Controller
                 'module' => $this->sessionInfo->module,
                 'date' => now()->format('d-m-Y'),
                 'summary' => $this->sessionInfo->summary,
+                'goals' => $this->sessionInfo->goals,
+                'evaluation' => $this->sessionInfo->evaluation,
             ])->render();
 
             $mail->Body = $html;
@@ -178,6 +180,8 @@ class ReportController extends Controller
             module: $this->sanitizeReportText((string) session('module', '')),
             course: $this->sanitizeReportText((string) session('course', '')),
             summary: $this->sanitizeReportText((string) session('summary', '')),
+            goals: $this->sanitizeReportText((string) session('goals', '')),
+            evaluation: $this->sanitizeReportText((string) session('evaluation', '')),
             sessionUid: $this->sanitizeReportText((string) session('session_uid', '')),
         );
     }
@@ -291,7 +295,7 @@ class ReportController extends Controller
 
     private function addInformationPage($phpWord)
     {
-        $page = $this->createpage($phpWord);
+        $page = $this->createPage($phpWord);
         $this->addStandardHeaderFooter($page);
 
         $page->addTextBreak(1);
@@ -325,12 +329,36 @@ class ReportController extends Controller
             'lineHeight' => 1.5,
         ]);
 
-        $page->addTitle('Samenvatting module', 2, $this->pageNumber);
+        $this->addModuleSubjectSections($page);
+    }
 
-        $page->addText($this->sessionInfo->summary, [
+    private function addModuleSubjectSections($page): void
+    {
+        foreach ($this->getModuleSubjects() as $title => $content) {
+            $this->addModuleSubjectSection($page, $title, $content);
+        }
+    }
+
+    private function addModuleSubjectSection($page, string $title, string $content): void
+    {
+        if (trim($content) === '') {
+            return;
+        }
+
+        $page->addTitle($title, 2, $this->pageNumber);
+        $page->addText($content, [
             'color' => '888888',
             'lineHeight' => 1.5,
         ]);
+    }
+
+    private function getModuleSubjects(): array
+    {
+        return [
+            'Samenvatting module' => $this->sessionInfo->summary,
+            'Leeruitkomsten module' => $this->sessionInfo->goals,
+            'Toetsing module' => $this->sessionInfo->evaluation,
+        ];
     }
 
     private function addTableOfContents($phpWord)

@@ -25,6 +25,8 @@ class ReportControllerGenerateReportTest extends TestCase
             module: 'Test Module',
             course: 'Test Course',
             summary: 'Summary',
+            goals: 'Goals',
+            evaluation: 'Evaluation',
             sessionUid: 'session-123'
         ));
 
@@ -49,15 +51,7 @@ class ReportControllerGenerateReportTest extends TestCase
         $this->assertNotFalse($documentXml);
         $this->assertStringContainsString('Generated report test content', $documentXml);
 
-        if (env('SAVE_REPORT_TEST_ARTIFACT', false)) {
-            $target = storage_path('app/testing/last-generate-report.docx');
-            @mkdir(dirname($target), 0777, true);
-            if (@copy($result['tempFile'], $target)) {
-                fwrite(STDOUT, PHP_EOL . 'Saved report to: ' . $target . PHP_EOL);
-            } else {
-                fwrite(STDOUT, PHP_EOL . 'Could not save report artifact to: ' . $target . PHP_EOL);
-            }
-        }
+        $this->saveReportArtifactIfEnabled($result['tempFile'], 'last-generate-report.docx');
         @unlink($result['tempFile']);
     }
 }

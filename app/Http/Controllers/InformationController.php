@@ -21,10 +21,16 @@ class InformationController extends Controller
 
     public function submit(Request $request)
     {
+        $maxLength = '2000';
+        $maxLengthMessage = "De :attribute mag niet langer zijn dan {$maxLength} tekens.";
         $request->validate([
-            'summary' => 'max:2000',
+            'summary' => "max:{$maxLength}",
+            'goals' => "max:{$maxLength}",
+            'evaluation' => "max:{$maxLength}",
         ], [
-            'summary.max' => 'De samenvatting mag niet langer zijn dan 2000 tekens.',
+            'summary.max' => $maxLengthMessage,
+            'goals.max' => $maxLengthMessage,
+            'evaluation.max' => $maxLengthMessage,
         ]);
         session()->put('name', request('name'));
         session()->put('course', request('course'));
@@ -32,6 +38,8 @@ class InformationController extends Controller
         session()->put('academy-abbreviation', Academy::where('name', request('academy'))->value('abbreviation'));
         session()->put('module', request('module'));
         session()->put('summary', request('summary'));
+        session()->put('goals', request('goals'));
+        session()->put('evaluation', request('evaluation'));
 
         return redirect(route('intermediate.view', 'lesniveau'));
     }
