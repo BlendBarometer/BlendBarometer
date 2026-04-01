@@ -73,7 +73,7 @@
             </div>
 
             <div class="mt-3">
-                <label for="field-placeholder-{{ $field->id }}" class="form-label">Instructie text</label>
+                <label for="field-placeholder-{{ $field->id }}" class="form-label">Instructie tekst</label>
                 <textarea
                     id="field-placeholder-{{ $field->id }}"
                     rows="3"
@@ -112,10 +112,13 @@
         <p class="text-muted fst-italic">Er zijn nog geen module-gegevens velden beschikbaar.</p>
     @endforelse
 
-    <div class="d-flex gap-2">
-        <button type="submit" class="btn btn-primary">Alles Opslaan</button>
-        <button type="button" class="btn btn-outline-primary" onclick="window.location.reload()">Annuleren</button>
-    </div>
+    @if ($fields->isNotEmpty())
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Alles Opslaan</button>
+            <button type="button" class="btn btn-outline-primary" onclick="window.location.reload()">Annuleren</button>
+        </div>
+    @endif
+
 </form>
 
 <br />
