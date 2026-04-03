@@ -31,7 +31,7 @@ class ReportController extends Controller
 {
     private int $pageNumber = 0;
     private SessionInfo $sessionInfo;
-    protected string $imageBasePath = 'https://blendbarometer.nl/images/';
+    protected string $imageBasePath;
 
     private $labelStyle = ['color' => '888888'];
     private $valueStyle = ['bold' => true];
@@ -40,6 +40,15 @@ class ReportController extends Controller
     private $labelWidth = 1500;
     private $valueWidth = 3000;
     private $paddingWidth = 300;
+
+    public function __construct()
+    {
+        $appUrl = rtrim((string) config('app.url', ''), '/');
+
+        $this->imageBasePath = app()->environment('production') && $appUrl !== ''
+            ? "$appUrl/images/"
+            : public_path('images') . DIRECTORY_SEPARATOR;
+    }
 
     public function sendReport()
     {
