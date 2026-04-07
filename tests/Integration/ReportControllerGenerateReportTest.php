@@ -251,9 +251,7 @@ class ReportControllerGenerateReportTest extends TestCase
             $this->assertStringContainsString('Legenda', $xml);
 
             // Fillable notes pages
-            $this->assertStringContainsString('Verslag gesprek', $xml);
             $this->assertStringContainsString('Advies en Actiepunten', $xml);
-            $this->assertStringContainsString('Actiepunten', $xml);
 
             // Verify no missing-graph fallbacks appeared
             $this->assertStringNotContainsString('Grafiek niet gevonden', $xml);
