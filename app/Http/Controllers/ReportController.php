@@ -502,9 +502,6 @@ class ReportController extends Controller
             $page->addText('Grafiek niet gevonden.');
         }
 
-        $page->addTextBox(['alignment' => Jc::CENTER, 'width' => 470, 'height' => 80])
-            ->addText('hier komt notities te staan');
-
         $subCategories = Sub_category::orderBy('id')->get();
 
         foreach ($subCategories as $subCategory) {
@@ -536,21 +533,24 @@ class ReportController extends Controller
 
             // Labels row
             $graphTable->addRow();
-            $graphTable->addCell(6000)->addText('Fysiek', ['alignment' => Jc::CENTER, 'size' => 11]);
-            $graphTable->addCell(6000)->addText('Online', ['alignment' => Jc::CENTER, 'size' => 11]);
+            $graphTable->addCell(6000)->addText('Fysiek', ['size' => 11], ['alignment' => Jc::CENTER]);
+            $graphTable->addCell(6000)->addText('Online', ['size' => 11], ['alignment' => Jc::CENTER]);
 
             // Explanation
             $page->addTextBreak(1);
             $page->addText('Uitleg:', ['bold' => true, 'size' => 12]);
             $description = GraphDescription::where('sub_category_id', $subCategory->id)->first();
             if ($description) {
-                $page->addText($description->description);
+                $page->addTextBox(['alignment' => Jc::CENTER, 'width' => 470, 'height' => 90])
+                    ->addText($description->description);
             } else {
-                $page->addText('Geen beschrijving beschikbaar.');
+                $page->addTextBox(['alignment' => Jc::CENTER, 'width' => 470, 'height' => 90])
+                ->addText('Geen beschrijving beschikbaar.');
             }
 
             // Notes box
             $page->addTextBreak(1);
+            $page->addText('Notities:', ['bold' => true, 'size' => 12]);
             $page->addTextBox(['alignment' => Jc::CENTER, 'width' => 470, 'height' => 90])
                 ->addText('hier komt notities te staan');
         }
