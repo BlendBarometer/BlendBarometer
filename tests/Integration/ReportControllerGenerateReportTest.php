@@ -250,7 +250,7 @@ class ReportControllerGenerateReportTest extends TestCase
             $this->assertStringContainsString('Moduleniveau', $xml);
             $this->assertStringContainsString('Legenda', $xml);
 
-            // Fillable notes pages
+            // Fillable notes page
             $this->assertStringContainsString('Advies en Actiepunten', $xml);
 
             // Verify no missing-graph fallbacks appeared
