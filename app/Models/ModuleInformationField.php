@@ -17,6 +17,10 @@ class ModuleInformationField extends Model
         'is_active',
     ];
 
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
+
     public function answers()
     {
         return $this->hasMany(ModuleInformationAnswer::class, 'module_information_field_id');

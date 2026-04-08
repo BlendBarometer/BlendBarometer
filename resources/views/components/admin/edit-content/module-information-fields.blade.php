@@ -90,23 +90,23 @@
 
             <div class="form-check form-switch mt-3">
                 <input
+                    type="hidden"
+                    name="fields[{{ $field->id }}][is_active]"
+                    value="false"
+                >
+                <input
                     class="form-check-input module-info-active-toggle"
                     type="checkbox"
                     role="switch"
                     id="field-active-{{ $field->id }}"
+                    name="fields[{{ $field->id }}][is_active]"
+                    value="true"
                     {{ $isActive ? 'checked' : '' }}
                 >
                 <label id="field-active-label-{{ $field->id }}" class="" for="field-active-{{ $field->id }}">
                     {{ $isActive ? 'Actief' : 'Inactief' }}
                 </label>
             </div>
-
-            <input
-                type="hidden"
-                name="fields[{{ $field->id }}][is_active]"
-                id="field-active-input-{{ $field->id }}"
-                value="{{ $isActive ? 'true' : 'false' }}"
-            >
         </section>
     @empty
         <p class="text-muted fst-italic">Er zijn nog geen module-gegevens velden beschikbaar.</p>
