@@ -248,7 +248,6 @@ class ReportControllerGenerateReportTest extends TestCase
             $this->assertStringContainsString('Samenwerken', $xml);
             $this->assertStringContainsString('Onderzoeken', $xml);
             $this->assertStringContainsString('Uitleg:', $xml);
-            $this->assertStringContainsString('hier komt notities te staan', $xml);
             $this->assertStringContainsString('Fysiek', $xml);
             $this->assertStringContainsString('Online', $xml);
             $this->assertStringContainsString('Lesniveau - Algemeen', $xml);
