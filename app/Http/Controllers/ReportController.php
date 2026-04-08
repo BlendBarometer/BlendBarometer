@@ -52,6 +52,15 @@ class ReportController extends Controller
     private $valueWidth = 3000;
     private $paddingWidth = 300;
 
+    public function __construct()
+    {
+        $appUrl = rtrim((string) config('app.url', ''), '/');
+
+        $this->imageBasePath = app()->environment('production') && $appUrl !== ''
+            ? "$appUrl/images/"
+            : public_path('images') . DIRECTORY_SEPARATOR;
+    }
+
     public function sendReport()
     {
         $this->sessionInfo = $this->extractSessionInfo();
@@ -664,32 +673,7 @@ class ReportController extends Controller
         $page = $this->createPage($phpWord);
         $this->addStandardHeaderFooter($page);
 
-        $page->addTitle('Verslag gesprek', 1, $this->pageNumber);
-        $textrun = $page->addTextRun();
-        $textrun->addText('Docent: ', $this->labelStyle);
-        $textrun->addText('vul hier in', $this->valueStyle);
-
-        $textrun = $page->addTextRun();
-        $textrun->addText('Icto Coach: ', $this->labelStyle);
-        $textrun->addText('vul hier in', $this->valueStyle);
-
-        $textrun = $page->addTextRun();
-        $textrun->addText('Datum gesprek: ', $this->labelStyle);
-        $textrun->addText('vul hier in', $this->valueStyle);
-
-        $page->addTitle('Verslag', 2, $this->pageNumber);
-        $page->addText('vul hier in');
-
-        $page = $this->createPage($phpWord);
-        $this->addStandardHeaderFooter($page);
-
         $page->addTitle('Advies en Actiepunten', 1, $this->pageNumber);
-
-        $page->addTitle('Advies', 2, $this->pageNumber);
-        $page->addText('vul hier in');
-
-        $page->addTitle('Actiepunten', 2, $this->pageNumber);
-        $page->addText('vul hier in');
     }
 
     private function createPage($phpWord)
