@@ -31,18 +31,7 @@ class ReportController extends Controller
 {
     private int $pageNumber = 0;
     private SessionInfo $sessionInfo;
-    protected string $imageBasePath = 'images/';
-
-    private function imagePath(string $imageName): string
-    {
-        $path = public_path("{$this->imageBasePath}{$imageName}");
-
-        if (!File::exists($path)) {
-            throw new \RuntimeException("Image not found: {$path}");
-        }
-
-        return $path;
-    }
+    protected string $imageBasePath;
 
     private $labelStyle = ['color' => '888888'];
     private $valueStyle = ['bold' => true];
@@ -546,22 +535,28 @@ class ReportController extends Controller
             $graphTable->addCell(6000)->addText('Online', ['size' => 11], ['alignment' => Jc::CENTER]);
 
             // Explanation
+            $textboxStyle = [
+                'alignment' => Jc::CENTER,
+                'width' => 470,
+                'height' => 90,
+            ];
+
             $page->addTextBreak(1);
             $page->addText('Uitleg:', ['bold' => true, 'size' => 12]);
             $description = GraphDescription::where('sub_category_id', $subCategory->id)->first();
             if ($description) {
-                $page->addTextBox(['alignment' => Jc::CENTER, 'width' => 470, 'height' => 90])
+                $page->addTextBox($textboxStyle)
                     ->addText($description->description);
             } else {
-                $page->addTextBox(['alignment' => Jc::CENTER, 'width' => 470, 'height' => 90])
-                ->addText('Geen beschrijving beschikbaar.');
+                $page->addTextBox($textboxStyle)
+                    ->addText('Geen beschrijving beschikbaar.');
             }
 
             // Notes box
             $page->addTextBreak(1);
             $page->addText('Notities:', ['bold' => true, 'size' => 12]);
-            $page->addTextBox(['alignment' => Jc::CENTER, 'width' => 470, 'height' => 90])
-                ->addText('hier komt notities te staan');
+            $page->addTextBox($textboxStyle)
+                ->addText('Vul hier notities in voor deze categorie.');
         }
 
         $page = $this->createPage($phpWord);
@@ -764,6 +759,17 @@ class ReportController extends Controller
             'height' => 160,
             'alignment' => Jc::START,
         ]);
+    }
+
+    private function imagePath(string $desiredPath): string
+    {
+        $normalizedPath = ltrim(str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $desiredPath), DIRECTORY_SEPARATOR);
+
+        if (str_starts_with($this->imageBasePath, 'http://') || str_starts_with($this->imageBasePath, 'https://')) {
+            return rtrim($this->imageBasePath, '/') . '/' . str_replace(DIRECTORY_SEPARATOR, '/', $normalizedPath);
+        }
+
+        return rtrim($this->imageBasePath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $normalizedPath;
     }
 
     private function sanitizeReportText(string $text): string
