@@ -24,7 +24,12 @@ class AuthController extends Controller
     public function login()
     {
         if (app()->isLocal()) {
-            $email = env('TEST_EMAIL');
+            $email = env('TEST_EMAIL', 'testuser@avans.nl');
+
+            if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                abort(500, 'Configureer een geldige TEST_EMAIL in je .env (bijv. testuser@avans.nl).');
+            }
+
             $user = User::where('email', $email)->first();
             if (!$user) {
                 $user = User::create([

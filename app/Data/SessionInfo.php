@@ -12,6 +12,8 @@ class SessionInfo
         public readonly string $module,
         public readonly string $course,
         public readonly string $summary,
+        public readonly string $goals,
+        public readonly string $evaluation,
         public readonly string $sessionUid,
     ) {}
 }

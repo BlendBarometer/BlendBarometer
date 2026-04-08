@@ -27,27 +27,24 @@
         </div>
     </div>
     <hr class="my-5"/>
-    <div class="d-flex flex-row gap-4">
-        <div class="d-flex flex-column gap-3 w-50">
-            <h2>Fysieke leeractiviteiten</h2>
-            @foreach ($lessonLevelPhysicalSubcategories as $i => $category)
-                <div class="card graph-card p-3">
-                    <canvas id="physical-{{ $category->id }}" class="bg-white rounded mb-2" role="img"></canvas>
-                    <strong>{{ $category->name }}</strong>
-                    <p class="mb-0">{{ $lessonLevelPhysicalDescriptions[$i]->description }}</p>
+    <div class="d-flex flex-column gap-3 w-100">
+        @foreach ($lessonLevelSubcategoriesGrouped as $name => $categories)
+            <div class="card graph-card p-3">
+                <strong class="mb-3 d-block fs-4">{{ $name }}</strong>
+                <div class="row mb-2">
+                    <div class="col">
+                        <canvas id="physical-{{ $categories->where('question_category_id', 1)->first()->id }}" class="bg-white rounded mb-2" role="img"></canvas>
+                        <p class="text-center mt-1">Fysiek</p>
+                    </div>
+                    <div class="col">
+                        <canvas id="online-{{ $categories->where('question_category_id', 2)->first()->id }}" class="bg-white rounded mb-2" role="img"></canvas>
+                        <p class="text-center mt-1">Online</p>
+                    </div>
                 </div>
-            @endforeach
-        </div>
-        <div class="d-flex flex-column gap-3 w-50">
-            <h2>Online leeractiviteiten</h2>
-            @foreach ($lessonLevelOnlineSubcategories as $i => $category)
-                <div class="card graph-card p-3">
-                    <canvas id="online-{{ $category->id }}" class="bg-white rounded mb-2" role="img"></canvas>
-                    <strong>{{ $category->name }}</strong>
-                    <p class="mb-0">{{ $lessonLevelOnlineDescriptions[$i]->description }}</p>
-                </div>
-            @endforeach
-        </div>
+                <h5 class="mt-3">Uitleg</h5>
+                <p class="mb-0">{{ $lessonLevelDescriptions[$name] ?? '' }}</p>
+            </div>
+        @endforeach
     </div>
     <hr class="my-5"/>
     <div class="card graph-card p-3">
@@ -114,8 +111,8 @@
         integrity="sha512-JPcRR8yFa8mmCsfrw4TNte1ZvF1e3+1SdGMslZvmrzDYxS69J7J49vkFL8u6u8PlPJK+H3voElBtUCzaXj+6ig=="
         crossorigin="anonymous"
         referrerpolicy="no-referrer"></script>
-<script src={{ URL::asset('js/custom-tooltip.js') }}></script>
-<script src={{ URL::asset('js/results-graphs.js') }}></script>
+<script src="{{ URL::asset('js/custom-tooltip.js') }}?v={{ filemtime(public_path('js/custom-tooltip.js')) }}"></script>
+<script src="{{ URL::asset('js/results-graphs.js') }}?v={{ filemtime(public_path('js/results-graphs.js')) }}"></script>
 
 <script>
     document.addEventListener("keydown", (e) => {
