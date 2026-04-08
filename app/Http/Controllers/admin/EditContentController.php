@@ -20,21 +20,13 @@ class EditContentController
     {
         $home = Content::where('section_name', 'intro_description')->value('info');
 
-        $lessonLevelPhysicalSubcategories = Sub_category::select('sub_category.name', "sub_category.id", 'graph_description.description')
-            ->leftJoin('graph_description', function ($join) {
-                $join->on('sub_category.id', '=', 'graph_description.sub_category_id')
-                    ->where('graph_description.graph_type', '=', 'physical');
-            })
-            ->where('sub_category.question_category_id', 1)
-            ->get();
-
-        $lessonLevelOnlineSubcategories = Sub_category::select('sub_category.name', "sub_category.id", 'graph_description.description')
-            ->leftJoin('graph_description', function ($join) {
-                $join->on('sub_category.id', '=', 'graph_description.sub_category_id')
-                    ->where('graph_description.graph_type', '=', 'online');
-            })
-            ->where('sub_category.question_category_id', 2)
-            ->get();
+        $lessonLevelSubcategories = Sub_category::select('sub_category.name', 'sub_category.id', 'graph_description.description', 'sub_category.question_category_id')
+            ->leftJoin('graph_description', 'sub_category.id', '=', 'graph_description.sub_category_id')
+            ->whereIn('sub_category.question_category_id', [1, 2])
+            ->orderBy('sub_category.name')
+            ->orderBy('sub_category.question_category_id')
+            ->get()
+            ->groupBy('name');
 
         $generalLessonLevelDescription = GraphDescription::select('id', 'description')->where('graph_type', 'lesson-level-general')->first();
 
@@ -48,30 +40,21 @@ class EditContentController
         ];
 
         $legenda = Graph_legenda::all();
+
+        $moduleInformationFields = ModuleInformationField::all();
+
         $moduleLevelAnswers = Module_level_answer::all();
-        $moduleInformationFields = $this->getModuleInformationFields();
 
-        try {
-            $tab = request()->get('tab', 'home');
-        } catch (\Exception $e) {
-            $tab = 'home';
-        }
-
-        return view(
-            'admin.edit-content',
-            [
-                'tab' => $tab,
-                'home' => $home,
-                'intermediateContent' => $intermediateContent,
-                'lessonLevelPhysicalSubcategories' => $lessonLevelPhysicalSubcategories,
-                'lessonLevelOnlineSubcategories' => $lessonLevelOnlineSubcategories,
-                'generalLessonLevelDescription' => $generalLessonLevelDescription,
-                'generalModuleDescription' => $generalModuleDescription,
-                'legenda' => $legenda,
-                'moduleLevelAnswers' => $moduleLevelAnswers,
-                'moduleInformationFields' => $moduleInformationFields,
-            ]
-        );
+        return view('admin.edit-content', compact(
+            'home',
+            'lessonLevelSubcategories',
+            'generalLessonLevelDescription',
+            'generalModuleDescription',
+            'intermediateContent',
+            'legenda',
+            'moduleInformationFields',
+            'moduleLevelAnswers'
+        ));
     }
 
     public function updateHomeContent(Request $request): RedirectResponse
@@ -86,14 +69,22 @@ class EditContentController
 
     public function updateChartContent(Request $request)
     {
-        $descriptions = $request->input('physical');
-        foreach ($descriptions as $description) {
-            $this->UpdateChartDescription($description);
-        }
-
-        $descriptions = $request->input('online');
-        foreach ($descriptions as $description) {
-            $this->UpdateChartDescription($description);
+        $charts = $request->input('chart');
+        foreach ($charts as $name => $data) {
+            $description = $data['description'];
+            $ids = explode(',', $data['ids']);
+            foreach ($ids as $id) {
+                $category = Sub_category::find($id);
+                if ($category) {
+                    GraphDescription::updateOrCreate(
+                        ['sub_category_id' => $id],
+                        [
+                            'description' => $description,
+                            'graph_type' => $category->question_category_id == 1 ? 'physical' : 'online'
+                        ]
+                    );
+                }
+            }
         }
 
         $generalLessonLevelDescription = $request->input('general_lesson_level');

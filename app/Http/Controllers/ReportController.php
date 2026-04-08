@@ -223,7 +223,7 @@ class ReportController extends Controller
             'marginRight' => 600,
         ]);
 
-        $section->addImage("{$this->imageBasePath}report-background.png", [
+        $section->addImage($this->imagePath('report-background.png'), [
             'width' => 1000,
             'height' => 600,
             'positioning' => 'absolute',
@@ -238,8 +238,8 @@ class ReportController extends Controller
         $imgtable = $section->addTable();
         $imgtable->addRow();
 
-        $imgtable->addCell(20000)->addImage("{$this->imageBasePath}logo-avans-white.png", ['align' => Jc::START, 'width' => 100, 'height' => 30]);
-        $imgtable->addCell(20000)->addImage("{$this->imageBasePath}report-logo.png", ['align' => Jc::END, 'width' => 140, 'height' => 25]);
+        $imgtable->addCell(20000)->addImage($this->imagePath('logo-avans-white.png'), ['align' => Jc::START, 'width' => 100, 'height' => 30]);
+        $imgtable->addCell(20000)->addImage($this->imagePath('report-logo.png'), ['align' => Jc::END, 'width' => 140, 'height' => 25]);
 
         $section->addTextBreak(1);
 
@@ -250,7 +250,7 @@ class ReportController extends Controller
 
         $section->addTextBreak(1);
 
-        $section->addImage("{$this->imageBasePath}introduction_image.png", [
+        $section->addImage($this->imagePath('introduction_image.png'), [
             'alignment' => Jc::CENTER,
             'width' => 460,
             'height' => 460,
@@ -291,7 +291,7 @@ class ReportController extends Controller
             'marginRight' => 600,
         ]);
 
-        $section->addImage("{$this->imageBasePath}report-background.png", [
+        $section->addImage($this->imagePath('report-background.png'), [
             'width' => 1000,
             'height' => 600,
             'positioning' => 'absolute',
@@ -306,12 +306,12 @@ class ReportController extends Controller
         $imgtable = $section->addTable();
         $imgtable->addRow();
 
-        $imgtable->addCell(20000)->addImage("{$this->imageBasePath}logo-avans-white.png", ['align' => Jc::START, 'width' => 100, 'height' => 30]);
-        $imgtable->addCell(20000)->addImage("{$this->imageBasePath}report-logo.png", ['align' => Jc::END, 'width' => 140, 'height' => 25]);
+        $imgtable->addCell(20000)->addImage($this->imagePath('logo-avans-white.png'), ['align' => Jc::START, 'width' => 100, 'height' => 30]);
+        $imgtable->addCell(20000)->addImage($this->imagePath('report-logo.png'), ['align' => Jc::END, 'width' => 140, 'height' => 25]);
 
         $section->addTextBreak(3);
 
-        $section->addImage("{$this->imageBasePath}introduction_image.png", [
+        $section->addImage($this->imagePath('introduction_image.png'), [
             'alignment' => Jc::CENTER,
             'width' => 460,
             'height' => 460,
@@ -340,7 +340,7 @@ class ReportController extends Controller
             'lineHeight' => 1.5,
         ]);
 
-        $table->addCell(3500)->addImage("{$this->imageBasePath}barometer-report.png", [
+        $table->addCell(3500)->addImage($this->imagePath('barometer-report.png'), [
             'alignment' => Jc::CENTER,
             'width' => 100,
             'height' => 100,
@@ -467,7 +467,7 @@ class ReportController extends Controller
         $page->addTitle('Inhoudsopgave', 1, $this->pageNumber);
         $page->addTOC();
 
-        $page->addImage("{$this->imageBasePath}barometer-report-2.png", [
+        $page->addImage($this->imagePath('barometer-report-2.png'), [
             'width' => 220,
             'height' => 220,
             'alignment' => Jc::CENTER,
@@ -483,9 +483,6 @@ class ReportController extends Controller
         $this->addStandardHeaderFooter($page);
 
         $page->addTitle('Resultaten', 1, $this->pageNumber);
-
-        $page->addTextBox(['alignment' => Jc::CENTER, 'width' => 470, 'height' => 80, 'borderColor' => $this->NotesTextBoxColor])
-            ->addText('Notities:');
 
         $tempId = $this->sessionInfo->sessionUid;
         $imageRelativePathRadar = "images/temp/{$tempId}_radar.png";
@@ -503,40 +500,63 @@ class ReportController extends Controller
             $page->addText('Grafiek niet gevonden.');
         }
 
-        $list1 = Sub_category::where('question_category_id', 1)->pluck('name');
-        $list2 = Sub_category::where('question_category_id', 2)->pluck('name');
+        $subCategories = Sub_category::orderBy('id')->get();
 
-        $i = 0;
-        $looping = true;
-        while ($looping) {
-            if (($i) % 2 == 0) {
-                $page = $this->createPage($phpWord);
-                $this->addStandardHeaderFooter($page);
-                $table = $page->addTable([
-                    'alignment' => Jc::CENTER,
-                ]);
-                $table->addRow();
-                if ($i == 0) {
-                    $table->addCell(6000)->addText('Fysieke leeractiviteiten', ['alignment' => Jc::START, 'bold' => true, 'size' => 15]);
-                    $table->addCell(6000)->addText('Online leeractiviteiten', ['alignment' => Jc::END, 'bold' => true, 'size' => 15]);
-                }
-                $page->addTextBreak(2);
+        foreach ($subCategories as $subCategory) {
+            $page = $this->createPage($phpWord);
+            $this->addStandardHeaderFooter($page);
+
+            // Title
+            $page->addTitle(trim(Whitespace::replaceAll((string) $subCategory->name, '-'), '-'), 2, $this->pageNumber);
+
+            // Graph table
+            $graphTable = $page->addTable(['alignment' => Jc::CENTER]);
+            $graphTable->addRow();
+
+            $tempId = $this->sessionInfo->sessionUid;
+            $cleanedName = trim(Whitespace::replaceAll((string) $subCategory->name, '-'), '-');
+            $physicalImagePath = Storage::disk('public')->path("images/temp/{$tempId}_physical{$cleanedName}.png");
+            $onlineImagePath = Storage::disk('public')->path("images/temp/{$tempId}_online{$cleanedName}.png");
+
+            $cell1 = $graphTable->addCell(6000);
+            $cell2 = $graphTable->addCell(6000);
+
+            if (file_exists($physicalImagePath)) {
+                $this->addGraph($physicalImagePath, $cell1);
             }
-            $name1 = null;
-            $name2 = null;
-            if ($i < $list1->count()) {
-                $name1 = Whitespace::replaceAll((string) $list1[$i], '-');
-                $name1 = trim($name1, '-');
+
+            if (file_exists($onlineImagePath)) {
+                $this->addGraph($onlineImagePath, $cell2);
             }
-            if ($i < $list2->count()) {
-                $name2 = Whitespace::replaceAll((string) $list2[$i], '-');
-                $name2 = trim($name2, '-');
+
+            // Labels row
+            $graphTable->addRow();
+            $graphTable->addCell(6000)->addText('Fysiek', ['size' => 11], ['alignment' => Jc::CENTER]);
+            $graphTable->addCell(6000)->addText('Online', ['size' => 11], ['alignment' => Jc::CENTER]);
+
+            // Explanation
+            $textboxStyle = [
+                'alignment' => Jc::CENTER,
+                'width' => 470,
+                'height' => 90,
+            ];
+
+            $page->addTextBreak(1);
+            $page->addText('Uitleg:', ['bold' => true, 'size' => 12]);
+            $description = GraphDescription::where('sub_category_id', $subCategory->id)->first();
+            if ($description) {
+                $page->addTextBox($textboxStyle)
+                    ->addText($description->description);
+            } else {
+                $page->addTextBox($textboxStyle)
+                    ->addText('Geen beschrijving beschikbaar.');
             }
-            $this->newGraphRow($table, $name1, $name2);
-            $i++;
-            if ($i >= $list1->count() && $i >= $list2->count()) {
-                $looping = false;
-            }
+
+            // Notes box
+            $page->addTextBreak(1);
+            $page->addText('Notities:', ['bold' => true, 'size' => 12]);
+            $page->addTextBox($textboxStyle)
+                ->addText('Vul hier notities in voor deze categorie.');
         }
 
         $page = $this->createPage($phpWord);
@@ -548,7 +568,7 @@ class ReportController extends Controller
         $imageRelativePathWheelOutside = "images/temp/{$tempId}_wheelOutside.png";
         $imagePathWheelOutside = Storage::disk('public')->path($imageRelativePathWheelOutside);
 
-        $imagePathWheelBarometerOutside = "{$this->imageBasePath}barometer-transparent.png";
+        $imagePathWheelBarometerOutside = $this->imagePath('barometer-transparent.png');
 
         if (!file_exists($imagePathWheelInside) || !file_exists($imagePathWheelOutside)) {
             $page->addText('Grafiek niet gevonden.');
@@ -642,54 +662,6 @@ class ReportController extends Controller
         return preg_replace('/[[:^print:]]/', '', $text);
     }
 
-    private function newGraphRow($table, $name1, $name2)
-    {
-        $name1Here = $name1 != null;
-        $name2Here = $name2 != null;
-
-        $tempId = $this->sessionInfo->sessionUid;
-        $imageRelativePath1 = "images/temp/{$tempId}_physical{$name1}.png";
-        $imagePath1 = Storage::disk('public')->path($imageRelativePath1);
-
-        $imageRelativePath2 = "images/temp/{$tempId}_online{$name2}.png";
-        $imagePath2 = Storage::disk('public')->path($imageRelativePath2);
-
-        $table->addRow();
-        $cell1 = $table->addCell(6000);
-        $cell2 = $table->addCell(6000);
-
-        if ($name1Here) {
-            $cell1->addTextBreak(2);
-            $this->addGraph($imagePath1, $cell1);
-        }
-
-        if ($name2Here) {
-            $cell2->addTextBreak(2);
-            $this->addGraph($imagePath2, $cell2);
-        }
-
-        $table->addRow();
-        $cell1 = $table->addCell(6000);
-        $cell2 = $table->addCell(6000);
-        if ($name1Here) {
-            $cell1->addText($name1, ['alignment' => Jc::START, 'bold' => true, 'size' => 13]);
-        }
-        if ($name2Here) {
-            $cell2->addText($name2, ['alignment' => Jc::END, 'bold' => true, 'size' => 13]);
-        }
-
-        $table->addRow();
-        $cell1 = $table->addCell(6000);
-        $cell2 = $table->addCell(6000);
-        if ($name1Here) {
-            $cell1->addTextBox(['alignment' => Jc::START, 'width' => 230, 'height' => 70, 'borderColor' => $this->NotesTextBoxColor])
-                ->addText('Notities:');
-        }
-        if ($name2 != null) {
-            $cell2->addTextBox(['alignment' => Jc::START, 'width' => 230, 'height' => 70, 'borderColor' => $this->NotesTextBoxColor])
-                ->addText('Notities:');
-        }
-    }
 
     private function addFillableNotes($phpWord)
     {
@@ -743,7 +715,7 @@ class ReportController extends Controller
         $footerTable = $footer->addTable(['alignment' => Jc::CENTER]);
         $footerTable->addRow();
 
-        $footerTable->addCell(4000)->addImage("{$this->imageBasePath}logo.png", [
+        $footerTable->addCell(4000)->addImage($this->imagePath('logo.png'), [
             'width' => 90,
             'height' => 16,
             'alignment' => Jc::START,
@@ -787,6 +759,17 @@ class ReportController extends Controller
             'height' => 160,
             'alignment' => Jc::START,
         ]);
+    }
+
+    private function imagePath(string $desiredPath): string
+    {
+        $normalizedPath = ltrim(str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $desiredPath), DIRECTORY_SEPARATOR);
+
+        if (str_starts_with($this->imageBasePath, 'http://') || str_starts_with($this->imageBasePath, 'https://')) {
+            return rtrim($this->imageBasePath, '/') . '/' . str_replace(DIRECTORY_SEPARATOR, '/', $normalizedPath);
+        }
+
+        return rtrim($this->imageBasePath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $normalizedPath;
     }
 
     private function sanitizeReportText(string $text): string

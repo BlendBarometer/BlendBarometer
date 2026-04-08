@@ -1,41 +1,29 @@
 <form action="{{ route('admin.edit-content.chart-update') }}" method="POST" class="w-100 h-100" onreset="hideGraphButtons()">
     @csrf
     @method('PUT')
-    <div class="d-flex pb-5">
-        <div class="d-flex flex-column gap-5 w-100 px-3">
-            @foreach ($lessonLevelPhysicalSubcategories as $category)
-                <div>
-                    <h3 class="h5">Grafiek fysiek - {{ $category->name }}</h3>
-                    <p class="my-1">Uitleg</p>
-                    <input type="hidden" name="physical[{{ $loop->index }}][id]" value="{{ $category->id }}">
-                    <textarea oninput="showGraphButtons()" style="height: 110px;" class="form-control p-2" name="physical[{{ $loop->index }}][description]">{{ $category->description }}</textarea>
-                </div>
-            @endforeach
-        </div>
-        <div class="d-flex flex-column gap-5 w-100 ps-3">
-            @foreach ($lessonLevelOnlineSubcategories as $category)
-                <div>
-                    <h3 class="h5">Grafiek online - {{ $category->name }}</h3>
-                    <p class="my-1">Uitleg</p>
-                    <input type="hidden" name="online[{{ $loop->index }}][id]" value="{{ $category->id }}">
-                    <textarea oninput="showGraphButtons()" style="height: 110px;" class="form-control p-2" name="online[{{ $loop->index }}][description]">{{ $category->description }}</textarea>
-                </div>
-            @endforeach
-        </div>
+    <div class="d-flex flex-column gap-5 w-100 px-3">
+        @foreach ($lessonLevelSubcategories as $name => $categories)
+            <div>
+                <h3 class="h5">Grafiek - {{ $name }}</h3>
+                <p class="my-1 fw-bold">Uitleg</p>
+                <input type="hidden" name="chart[{{ $name }}][ids]" value="{{ $categories->pluck('id')->implode(',') }}">
+                <textarea oninput="showGraphButtons()" style="height: 200px;" class="form-control p-2" name="chart[{{ $name }}][description]">{{ $categories->first()->description }}</textarea>
+            </div>
+        @endforeach
     </div>
     
     <div class="d-flex flex-column gap-3 w-100 ps-3">
         <div class="h-100">
             <h3 class="h5">Lesniveau algemeen</h3>
-            <p class="my-1">Uitleg</p>
+            <p class="my-1 fw-bold">Uitleg</p>
             <input type="hidden" name="general_lesson_level[id]" value="{{ $generalLessonLevelDescription->id }}">
-            <textarea oninput="showGraphButtons()" style="height: 110px;" class="form-control p-2" name="general_lesson_level[description]">{{ $generalLessonLevelDescription->description }}</textarea>
+            <textarea oninput="showGraphButtons()" style="height: 200px;" class="form-control p-2" name="general_lesson_level[description]">{{ $generalLessonLevelDescription->description }}</textarea>
         </div>
         <div class="h-100">
             <h3 class="h5">Moduleniveau algemeen</h3>
-            <p class="my-1">Uitleg</p>
+            <p class="my-1 fw-bold">Uitleg</p>
             <input type="hidden" name="general_module[id]" value="{{ $generalModuleDescription->id }}">
-            <textarea oninput="showGraphButtons()" style="height: 110px;" class="form-control p-2" name="general_module[description]">{{ $generalModuleDescription->description }}</textarea>
+            <textarea oninput="showGraphButtons()" style="height: 200px;" class="form-control p-2" name="general_module[description]">{{ $generalModuleDescription->description }}</textarea>
         </div>
     </div>
 
