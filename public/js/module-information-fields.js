@@ -2,12 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.module-info-active-toggle').forEach((toggle) => {
         const syncActiveState = () => {
             const id = toggle.id.replace('field-active-', '');
-            const hidden = document.getElementById(`field-active-input-${id}`);
             const label = document.getElementById(`field-active-label-${id}`);
-
-            if (hidden) {
-                hidden.value = toggle.checked ? 'true' : 'false';
-            }
 
             if (label) {
                 label.textContent = toggle.checked ? 'Actief' : 'Inactief';

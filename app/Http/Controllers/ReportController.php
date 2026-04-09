@@ -43,11 +43,8 @@ class ReportController extends Controller
 
     public function __construct()
     {
-        $appUrl = rtrim((string) config('app.url', ''), '/');
-
-        $this->imageBasePath = app()->environment('production') && $appUrl !== ''
-            ? "$appUrl/images/"
-            : public_path('images') . DIRECTORY_SEPARATOR;
+        // PhpWord image handling should use local filesystem paths for reliable DOCX generation.
+        $this->imageBasePath = public_path('images') . DIRECTORY_SEPARATOR;
     }
 
     public function sendReport()
@@ -764,10 +761,6 @@ class ReportController extends Controller
     private function imagePath(string $desiredPath): string
     {
         $normalizedPath = ltrim(str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $desiredPath), DIRECTORY_SEPARATOR);
-
-        if (str_starts_with($this->imageBasePath, 'http://') || str_starts_with($this->imageBasePath, 'https://')) {
-            return rtrim($this->imageBasePath, '/') . '/' . str_replace(DIRECTORY_SEPARATOR, '/', $normalizedPath);
-        }
 
         return rtrim($this->imageBasePath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $normalizedPath;
     }

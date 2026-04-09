@@ -16,8 +16,15 @@ use Illuminate\View\View;
 
 class EditContentController
 {
-    public function index(): View
+    public function index(Request $request): View
     {
+        $allowedTabs = ['home', 'information', 'lesson', 'module', 'results', 'chart', 'module-information', 'legenda'];
+        $tab = $request->query('tab', 'home');
+
+        if (!in_array($tab, $allowedTabs, true)) {
+            $tab = 'home';
+        }
+
         $home = Content::where('section_name', 'intro_description')->value('info');
 
         $lessonLevelSubcategories = Sub_category::select('sub_category.name', 'sub_category.id', 'graph_description.description', 'sub_category.question_category_id')
@@ -46,6 +53,7 @@ class EditContentController
         $moduleLevelAnswers = Module_level_answer::all();
 
         return view('admin.edit-content', compact(
+            'tab',
             'home',
             'lessonLevelSubcategories',
             'generalLessonLevelDescription',
