@@ -503,11 +503,14 @@ class ReportController extends Controller
             $page = $this->createPage($phpWord);
             $this->addStandardHeaderFooter($page);
 
-            // Title
-            $page->addTitle(trim(Whitespace::replaceAll((string) $subCategory->name, '-'), '-'), 2, $this->pageNumber);
-
             // Graph table
             $graphTable = $page->addTable(['alignment' => Jc::CENTER]);
+
+            // Labels row
+            $graphTable->addRow();
+            $graphTable->addCell(6000)->addText('Fysieke Activiteiten', ['size' => 13], ['alignment' => Jc::LEFT], ['bold' => true]);
+            $graphTable->addCell(6000)->addText('Online Activiteiten', ['size' => 13], ['alignment' => Jc::LEFT], ['bold' => true]);
+
             $graphTable->addRow();
 
             $tempId = $this->sessionInfo->sessionUid;
@@ -526,11 +529,6 @@ class ReportController extends Controller
                 $this->addGraph($onlineImagePath, $cell2);
             }
 
-            // Labels row
-            $graphTable->addRow();
-            $graphTable->addCell(6000)->addText('Fysiek', ['size' => 11], ['alignment' => Jc::CENTER]);
-            $graphTable->addCell(6000)->addText('Online', ['size' => 11], ['alignment' => Jc::CENTER]);
-
             // Explanation
             $textboxStyle = [
                 'alignment' => Jc::CENTER,
@@ -539,7 +537,7 @@ class ReportController extends Controller
             ];
 
             $page->addTextBreak(1);
-            $page->addText('Uitleg:', ['bold' => true, 'size' => 12]);
+            $page->addText($subCategory->name . ':', ['bold' => true, 'size' => 12]);
             $description = GraphDescription::where('sub_category_id', $subCategory->id)->first();
             if ($description) {
                 $page->addTextBox($textboxStyle)
