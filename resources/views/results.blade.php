@@ -30,18 +30,17 @@
     <div class="d-flex flex-column gap-3 w-100">
         @foreach ($lessonLevelSubcategoriesGrouped as $name => $categories)
             <div class="card graph-card p-3">
-                <strong class="mb-3 d-block fs-4">{{ $name }}</strong>
                 <div class="row mb-2">
                     <div class="col">
+                        <strong class="mb-3 d-block fs-4">Fysieke Leeractiviteiten</strong>
                         <canvas id="physical-{{ $categories->where('question_category_id', 1)->first()->id }}" class="bg-white rounded mb-2" role="img"></canvas>
-                        <p class="text-center mt-1">Fysiek</p>
                     </div>
                     <div class="col">
+                        <strong class="mb-3 d-block fs-4">Online Leeractiviteiten</strong>
                         <canvas id="online-{{ $categories->where('question_category_id', 2)->first()->id }}" class="bg-white rounded mb-2" role="img"></canvas>
-                        <p class="text-center mt-1">Online</p>
                     </div>
                 </div>
-                <h5 class="mt-3">Uitleg</h5>
+                <h5 class="mt-3">{{ $name }}</h5>
                 <p class="mb-0">{{ $lessonLevelDescriptions[$name] ?? '' }}</p>
             </div>
         @endforeach
