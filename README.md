@@ -36,54 +36,67 @@ Uncomment daarna `;extension=gd` door de regel te veranderen naar `extension=gd`
 ```composer run dev```
 7. De website zou nu te zien moeten zijn op `http://localhost:8000/`!
 
-## Deployen naar productie (blendbarometer.nl)
+## Handmatig deployen en updaten (via FTP/FileZilla)
 
-Deze repository bevat nu:
+Als je de applicatie handmatig update via een FTP client zoals FileZilla (zonder SSH/Terminal toegang), volg dan deze stappen.
 
-- `scripts/deploy.sh` (server-side deploy script)
-- `.github/workflows/deploy.yml` (GitHub Actions workflow)
+### 1. Lokaal voorbereiden
 
-### 1. Eenmalige server-setup
+Voordat je bestanden overzet, moet je zorgen dat je applicatie 'production-ready' is gebouwd:
 
-1. Clone deze repository op je productie server.
-2. Zorg dat `.env` op de server op `APP_ENV=production` staat met correcte `DB_*` en `MAIL_*` waarden.
-3. Zorg dat de webserver naar de `public/` map wijst.
+- Run `npm run build` lokaal om de laatste frontend assets (CSS/JS) te genereren. Deze komen in de `public/build/` map terecht.
 
-### 2. Vereiste GitHub Secrets
+### 2. Welke bestanden transfereren?
 
-Voeg in GitHub (Repository -> Settings -> Secrets and variables -> Actions) deze secrets toe:
+Zet je lokale wijzigingen over naar de server, maar let goed op wat je **wel** en **niet** overschrijft!
 
-- `PROD_HOST` (bijv. `blendbarometer.nl` of server IP)
-- `PROD_PORT` (meestal `22`)
-- `PROD_USER` (SSH user)
-- `PROD_SSH_KEY` (private key voor SSH)
-- `PROD_APP_PATH` (pad op server, bijv. `/var/www/blendbarometer`)
+**Wel uploaden (overschrijven op de server):**
 
-Optioneel:
+- `app/` (Controllers, Models, etc.)
+- `config/` (Configuratie bestanden)
+- `database/migrations/` en `database/seeders/` (Voor database updates)
+- `public/build/` (De vers gebouwde assets van stap 1)
+- `public/` overige gewijzigde assets (zoals nieuwe plaatjes, index.php updaten)
+- `resources/views/` (Je Blade templates)
+- `routes/` (O.a. `web.php` en `console.php`)
+- `vendor/` (Alleen overzetten als je nieuwe Composer packages hebt geïnstalleerd)
 
-- `PROD_PHP_BIN` (default: `php`)
-- `PROD_COMPOSER_BIN` (default: `composer`)
-- `PROD_NPM_BIN` (default: `npm`)
-- `PROD_SKIP_NPM_BUILD` (`1` om frontend build over te slaan, anders `0`)
-- `PROD_SKIP_MIGRATIONS` (`1` om migrations over te slaan, anders `0`)
+**NIET uploaden:**
 
-### 3. Deployment uitvoeren
+- `.env` (Bevat je lokale instellingen, deze mag de productie/test server `.env` NOOIT overschrijven!)
+- `node_modules/` (Niet nodig op de server, neemt gigantisch veel ruimte in)
+- `tests/`, `.git/`, `.github/`, `.editorconfig` (Development bestanden)
+- De **inhoud** van de `storage/` map, met name `storage/app/` (geüploade bestanden van gebruikers) mag je nooit overschrijven of wissen, anders raak je data kwijt.
 
-- Push naar `main` triggert automatische deployment.
-- Of start handmatig via `Actions -> Deploy Blendbarometer -> Run workflow`.
+### 3. Caches legen op de server
 
-De workflow logt in op de server en draait:
+Als je de bestanden hebt overschreven, merken Laravel (en de bezoekers) dit niet altijd direct op in verband met caching op de server. Om dit op te lossen:
 
-```bash
-bash scripts/deploy.sh
+1. Bezoek de map `bootstrap/cache/` op de remote server.
+2. Verwijder alle **`.php`** bestanden in deze map (zoals `routes-v7.php`, `routes.php`, `config.php`, `packages.php`).
+3. Verwijder **niet** het `.gitignore` bestand in diezelfde map.
+*Doordat je deze bestanden verwijdert, forceer je Laravel om de vernieuwde versies direct opnieuw en 'vers' in te laden.*
+
+### 4. Database updaten (Migraties & Seeders)
+
+Aangezien je geen terminal hebt op de server om `php artisan migrate` in te typen, doe je dit via een afgeschermde web-route.
+
+1. Maak in je bestand `routes/web.php` (lokaal) tijdelijk een verborgen route aan met een moeilijke naam:
+
+```php
+use Illuminate\Support\Facades\Artisan;
+
+Route::get('/mijn-geheime-update-route-123', function () {
+    $output = [];
+    
+    // Voer de database migraties uit
+    Artisan::call('migrate', ['--force' => true]);
+    $output[] = 'Migraties uitgevoerd: ' . Artisan::output();
+
+    return implode('<br>', $output);
+});
 ```
 
-Dat script doet o.a.:
-
-- `php artisan down`
-- `git pull`
-- `composer install --no-dev`
-- `npm ci && npm run build` (tenzij overgeslagen)
-- `php artisan migrate --force` (tenzij overgeslagen)
-- Laravel caches verversen
-- `php artisan up`
+1. Upload deze aangepaste `routes/web.php` map naar de server (Vergeet niet stap 3 uit te voeren: **caches legen!**).
+2. Bezoek de opgezette URL in je browser (bijv. `https://blendbarometer.nl/mijn-geheime-update-route-123`). Je ziet nu de output van de migratie op je scherm.
+3. **BELANGRIJK:** Haal deze tijdelijke route daarna meteen weer uit je lokale bestand, upload `web.php` opnieuw en wis voor een laatste keer de cache!
