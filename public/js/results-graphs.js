@@ -41,11 +41,6 @@ new Chart(lessonLevelGraph, {
     },
     options: {
         responsive: true,
-        scale: {
-            r: {
-                min: 0,
-            }
-        },
         animation: {
             onComplete: function () {
                 const tooltip = this.tooltip;
@@ -74,6 +69,8 @@ new Chart(lessonLevelGraph, {
         },
         scales: {
             r: {
+                min: 0,
+                max: 10,
                 pointLabels: {
                     font: {
                         size: 16
@@ -84,14 +81,13 @@ new Chart(lessonLevelGraph, {
                 },
                 grid: {
                     lineWidth: 2,
+                },
+                ticks: {
+                    precision: 0,
+                    stepSize: 2
                 }
             }
-        },
-        scale: {
-            ticks: {
-                precision: 0
-            }
-        },
+        }
     }
 });
 
