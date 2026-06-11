@@ -140,13 +140,34 @@ for (const category of lessonLevelSubcategories) {
             ]
         },
         options: {
-            responsive: true,
+            responsive: false,
+            maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    top: 15,
+                    bottom: 30,
+                    left: 15,
+                    right: 15,
+                }
+            },
             plugins: {
                 legend: {
                     display: false
                 },
             },
             scales: {
+                x: {
+                    ticks: {
+                        font: {
+                            size: 10,
+                        },
+                        maxRotation: 0,
+                        minRotation: 0,
+                        autoSkip: true,
+                        align: 'end',
+                        padding: 6,
+                    }
+                },
                 y: {
                     min: 0,
                     max: 2,
@@ -225,13 +246,34 @@ for (const category of lessonLevelOnlineSubcategories) {
             }]
         },
         options: {
-            responsive: true,
+            responsive: false,
+            maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    top: 15,
+                    bottom: 30,
+                    left: 15,
+                    right: 15,
+                }
+            },
             plugins: {
                 legend: {
                     display: false
                 },
             },
             scales: {
+                x: {
+                    ticks: {
+                        font: {
+                            size: 10,
+                        },
+                        maxRotation: 0,
+                        minRotation: 0,
+                        autoSkip: true,
+                        align: 'end',
+                        padding: 6,
+                    }
+                },
                 y: {
                     min: 0,
                     max: 2,
