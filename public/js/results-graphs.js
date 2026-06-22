@@ -159,7 +159,7 @@ for (const category of lessonLevelSubcategories) {
                 x: {
                     ticks: {
                         font: {
-                            size: 10,
+                            size: 14,
                         },
                         maxRotation: 0,
                         minRotation: 0,
@@ -265,7 +265,7 @@ for (const category of lessonLevelOnlineSubcategories) {
                 x: {
                     ticks: {
                         font: {
-                            size: 10,
+                            size: 14,
                         },
                         maxRotation: 0,
                         minRotation: 0,
