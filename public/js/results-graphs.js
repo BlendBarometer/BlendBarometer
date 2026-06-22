@@ -17,6 +17,28 @@ function scoreToFrequencyLabel(value) {
     return String(value);
 }
 
+/**
+ * Wrap a label string into multiple lines (array) by splitting on spaces.
+ * Returns an array of lines for Chart.js to render multi-line ticks.
+ */
+function wrapLabel(label, maxCharsPerLine = 14) {
+    if (!label || typeof label !== 'string') return label;
+    const words = label.split(' ');
+    const lines = [];
+    let current = '';
+
+    for (const word of words) {
+        if ((current + (current ? ' ' : '') + word).length <= maxCharsPerLine) {
+            current = current ? current + ' ' + word : word;
+        } else {
+            if (current) lines.push(current);
+            current = word;
+        }
+    }
+    if (current) lines.push(current);
+    return lines.length === 1 ? lines : lines;
+}
+
 const lessonLevelGraph = document.getElementById('lessonLevel');
 
 Chart.defaults.font.size = 16;
@@ -130,7 +152,7 @@ for (const category of lessonLevelSubcategories) {
     new Chart(graph, {
         type: 'bar',
         data: {
-            labels: categoryLabels,
+            labels: categoryLabels.map(l => wrapLabel(l, 14)),
             datasets: [
                 {
                     label: 'Punten gescoord',
@@ -157,14 +179,15 @@ for (const category of lessonLevelSubcategories) {
             },
             scales: {
                 x: {
+                    offset: true,
                     ticks: {
                         font: {
                             size: 14,
                         },
                         maxRotation: 0,
                         minRotation: 0,
-                        autoSkip: true,
-                        align: 'end',
+                        autoSkip: false,
+                        align: 'center',
                         padding: 6,
                     }
                 },
@@ -238,7 +261,7 @@ for (const category of lessonLevelOnlineSubcategories) {
     new Chart(graph, {
         type: 'bar',
         data: {
-            labels: categoryLabels,
+            labels: categoryLabels.map(l => wrapLabel(l, 14)),
             datasets: [{
                 label: 'Punten gescoord',
                 data: categoryData,
@@ -263,14 +286,15 @@ for (const category of lessonLevelOnlineSubcategories) {
             },
             scales: {
                 x: {
+                    offset: true,
                     ticks: {
                         font: {
                             size: 14,
                         },
                         maxRotation: 0,
                         minRotation: 0,
-                        autoSkip: true,
-                        align: 'end',
+                        autoSkip: false,
+                        align: 'center',
                         padding: 6,
                     }
                 },
