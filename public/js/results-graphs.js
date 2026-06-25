@@ -143,6 +143,13 @@ for (const category of lessonLevelSubcategories) {
     const subCatId = category.id;
     const graph = document.getElementById('physical-' + subCatId);
     const categoryLabels = lessonLevelPhysicalQuestions[subCatId] ? lessonLevelPhysicalQuestions[subCatId] : [];
+    // Normalize specific peerfeedback labels to a short, consistent form
+    const normalizedCategoryLabels = categoryLabels.map(l => {
+        const s = String(l || '');
+        if (/peerfeedback/i.test(s)) return 'Peerfeedback';
+        if (/Spelvorm/i.test(s)) return 'Spelvorm';
+        return s;
+    });
 
     let categoryData = [];
     if (lessonLevelDataAll && lessonLevelDataAll[subCatId]) {
@@ -151,8 +158,8 @@ for (const category of lessonLevelSubcategories) {
 
     new Chart(graph, {
         type: 'bar',
-        data: {
-            labels: categoryLabels.map(l => wrapLabel(l, 14)),
+            data: {
+            labels: normalizedCategoryLabels.map(l => wrapLabel(l, 14)),
             datasets: [
                 {
                     label: 'Punten gescoord',
@@ -253,6 +260,12 @@ for (const category of lessonLevelOnlineSubcategories) {
     const graph = document.getElementById('online-' + subCatId);
 
     const categoryLabels = lessonLevelOnlineQuestions[subCatId] ? lessonLevelOnlineQuestions[subCatId] : [];
+    // Normalize specific peerfeedback labels to a short, consistent form
+    const normalizedCategoryLabelsOnline = categoryLabels.map(l => {
+        const s = String(l || '');
+        if (/peerfeedback/i.test(s)) return 'Peerfeedback';
+        return s;
+    });
     let categoryData = [];
     if (lessonLevelDataAll && lessonLevelDataAll[subCatId]) {
         categoryData = Object.values(lessonLevelDataAll[subCatId]).map(Number);
@@ -260,8 +273,8 @@ for (const category of lessonLevelOnlineSubcategories) {
 
     new Chart(graph, {
         type: 'bar',
-        data: {
-            labels: categoryLabels.map(l => wrapLabel(l, 14)),
+            data: {
+            labels: normalizedCategoryLabelsOnline.map(l => wrapLabel(l, 14)),
             datasets: [{
                 label: 'Punten gescoord',
                 data: categoryData,
