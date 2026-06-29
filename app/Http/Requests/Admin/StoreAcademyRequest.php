@@ -18,7 +18,7 @@ class StoreAcademyRequest extends FormRequest
                     $exists = \App\Models\Academy::query()
                         ->whereRaw('lower(abbreviation) = ?', [mb_strtolower($value, 'UTF8')])
                         ->exists();
-    
+
                     if ($exists) {
                         $fail('Deze afkorting bestaat al (hoofdletterongevoelig).');
                     }

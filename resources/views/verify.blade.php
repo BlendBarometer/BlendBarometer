@@ -1,9 +1,9 @@
 <x-layout>
     @section('styles')
-        <link rel="stylesheet" href="{{ asset('css/auth.css') }}">
+        @vite('resources/css/auth.css')
     @endsection
     @section('scripts')
-        <script src="{{ asset('js/auth.js') }}" defer></script>
+        @vite('resources/js/auth.js')
     @endsection
 
     <div class="position-relative vh-100">

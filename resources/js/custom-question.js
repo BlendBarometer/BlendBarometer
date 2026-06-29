@@ -19,7 +19,7 @@ function addQuestion() {
     // delete knop
     const button = document.createElement('button');
     button.className = 'btn btn-sm btn-danger me-2';
-    button.addEventListener('click', function() {
+    button.addEventListener('click', function () {
         wrapper.remove();
     });
 
@@ -35,7 +35,7 @@ function addQuestion() {
     label.className = 'fw-semibold';
     label.textContent = txt;
     headerGroup.appendChild(label);
-    
+
     // options container
     const row = document.createElement('div');
     row.className = 'row gap-4 mx-0';

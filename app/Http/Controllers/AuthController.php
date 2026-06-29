@@ -9,6 +9,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\View;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -23,7 +24,12 @@ class AuthController extends Controller
     public function login()
     {
         if (app()->isLocal()) {
-            $email = env('TEST_EMAIL');
+            $email = env('TEST_EMAIL', 'testuser@avans.nl');
+
+            if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                abort(500, 'Configureer een geldige TEST_EMAIL in je .env (bijv. testuser@avans.nl).');
+            }
+
             $user = User::where('email', $email)->first();
             if (!$user) {
                 $user = User::create([
@@ -82,7 +88,7 @@ class AuthController extends Controller
 
             Session::put('last_sent', now());
         } catch (\Exception $e) {
-            \Log::error('Mail send failed: ' . $e->getMessage());
+            Log::error('Mail send failed: ' . $e->getMessage());
             return back()->withErrors(['mail' => 'Er is een fout opgetreden bij het versturen van de e-mail. Probeer het later opnieuw.']);
         }
 

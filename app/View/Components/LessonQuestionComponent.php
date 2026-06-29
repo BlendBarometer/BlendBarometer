@@ -9,7 +9,7 @@ class LessonQuestionComponent extends Component
     public $selectedAnswer;
     public $fieldName;
     public $description;
-    
+
 
     /**
      * Create a new component instance.

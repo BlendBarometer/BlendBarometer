@@ -1,3 +1,5 @@
+import { externalTooltipHandler } from './custom-tooltip';
+
 let hasSavedImages = false;
 
 const physicalColor = {
@@ -7,6 +9,36 @@ const physicalColor = {
 const onlineColor = {
     borderColor: '#FF6384',
     backgroundColor: 'rgba(255,99,132,0.5)',
+}
+
+function scoreToFrequencyLabel(value) {
+    const numericValue = Number(value);
+    if (numericValue === 0) return 'Nooit';
+    if (numericValue === 1) return 'Af en toe';
+    if (numericValue === 2) return 'Vaak';
+    return String(value);
+}
+
+/**
+ * Wrap a label string into multiple lines (array) by splitting on spaces.
+ * Returns an array of lines for Chart.js to render multi-line ticks.
+ */
+function wrapLabel(label, maxCharsPerLine = 14) {
+    if (!label || typeof label !== 'string') return label;
+    const words = label.split(' ');
+    const lines = [];
+    let current = '';
+
+    for (const word of words) {
+        if ((current + (current ? ' ' : '') + word).length <= maxCharsPerLine) {
+            current = current ? current + ' ' + word : word;
+        } else {
+            if (current) lines.push(current);
+            current = word;
+        }
+    }
+    if (current) lines.push(current);
+    return lines.length === 1 ? lines : lines;
 }
 
 const lessonLevelGraph = document.getElementById('lessonLevel');
@@ -33,11 +65,6 @@ new Chart(lessonLevelGraph, {
     },
     options: {
         responsive: true,
-        scale: {
-            r: {
-                min: 0,
-            }
-        },
         animation: {
             onComplete: function () {
                 const tooltip = this.tooltip;
@@ -55,7 +82,7 @@ new Chart(lessonLevelGraph, {
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': csrfToken,
                         },
-                        body: JSON.stringify({image: base64Image, name: 'radar'})
+                        body: JSON.stringify({ image: base64Image, name: 'radar' })
                     }).then(response => {
 
                     }).catch(error => {
@@ -66,6 +93,8 @@ new Chart(lessonLevelGraph, {
         },
         scales: {
             r: {
+                min: 0,
+                max: 10,
                 pointLabels: {
                     font: {
                         size: 16
@@ -76,14 +105,13 @@ new Chart(lessonLevelGraph, {
                 },
                 grid: {
                     lineWidth: 2,
+                },
+                ticks: {
+                    precision: 0,
+                    stepSize: 2
                 }
             }
-        },
-        scale: {
-            ticks: {
-                precision: 0
-            }
-        },
+        }
     }
 });
 
@@ -117,6 +145,13 @@ for (const category of lessonLevelSubcategories) {
     const subCatId = category.id;
     const graph = document.getElementById('physical-' + subCatId);
     const categoryLabels = lessonLevelPhysicalQuestions[subCatId] ? lessonLevelPhysicalQuestions[subCatId] : [];
+    // Normalize specific peerfeedback labels to a short, consistent form
+    const normalizedCategoryLabels = categoryLabels.map(l => {
+        const s = String(l || '');
+        if (/peerfeedback/i.test(s)) return 'Peerfeedback';
+        if (/Spelvorm/i.test(s)) return 'Spelvorm';
+        return s;
+    });
 
     let categoryData = [];
     if (lessonLevelDataAll && lessonLevelDataAll[subCatId]) {
@@ -126,7 +161,7 @@ for (const category of lessonLevelSubcategories) {
     new Chart(graph, {
         type: 'bar',
         data: {
-            labels: categoryLabels,
+            labels: normalizedCategoryLabels.map(l => wrapLabel(l, 14)),
             datasets: [
                 {
                     label: 'Punten gescoord',
@@ -136,16 +171,44 @@ for (const category of lessonLevelSubcategories) {
             ]
         },
         options: {
-            responsive: true,
+            responsive: false,
+            maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    top: 15,
+                    bottom: 30,
+                    left: 15,
+                    right: 15,
+                }
+            },
             plugins: {
                 legend: {
                     display: false
                 },
             },
             scales: {
+                x: {
+                    offset: true,
+                    ticks: {
+                        font: {
+                            size: 14,
+                        },
+                        maxRotation: 0,
+                        minRotation: 0,
+                        autoSkip: false,
+                        align: 'center',
+                        padding: 6,
+                    }
+                },
                 y: {
-                    suggestedMin: 0,
-                    suggestedMax: 2
+                    min: 0,
+                    max: 2,
+                    ticks: {
+                        stepSize: 1,
+                        callback: function (value) {
+                            return scoreToFrequencyLabel(value);
+                        }
+                    }
                 },
             },
             scale: {
@@ -170,12 +233,12 @@ for (const category of lessonLevelSubcategories) {
                                 'Content-Type': 'application/json',
                                 'X-CSRF-TOKEN': csrfToken,
                             },
-                            body: JSON.stringify({image: base64Image, name: 'physical' + category.name})
+                            body: JSON.stringify({ image: base64Image, name: 'physical' + category.name })
                         }).then(response => {
 
                         }).catch(error => {
 
-                        });              
+                        });
                     }
                 }
             }
@@ -188,7 +251,7 @@ for (const category of lessonLevelSubcategories) {
         const label = categoryLabels[i];
         const data = categoryData[i];
 
-        graphAriaLabel += label + ": " + data + ". ";
+        graphAriaLabel += label + ": " + scoreToFrequencyLabel(data) + ". ";
     }
 
     graph.ariaLabel = graphAriaLabel;
@@ -199,6 +262,12 @@ for (const category of lessonLevelOnlineSubcategories) {
     const graph = document.getElementById('online-' + subCatId);
 
     const categoryLabels = lessonLevelOnlineQuestions[subCatId] ? lessonLevelOnlineQuestions[subCatId] : [];
+    // Normalize specific peerfeedback labels to a short, consistent form
+    const normalizedCategoryLabelsOnline = categoryLabels.map(l => {
+        const s = String(l || '');
+        if (/peerfeedback/i.test(s)) return 'Peerfeedback';
+        return s;
+    });
     let categoryData = [];
     if (lessonLevelDataAll && lessonLevelDataAll[subCatId]) {
         categoryData = Object.values(lessonLevelDataAll[subCatId]).map(Number);
@@ -207,7 +276,7 @@ for (const category of lessonLevelOnlineSubcategories) {
     new Chart(graph, {
         type: 'bar',
         data: {
-            labels: categoryLabels,
+            labels: normalizedCategoryLabelsOnline.map(l => wrapLabel(l, 14)),
             datasets: [{
                 label: 'Punten gescoord',
                 data: categoryData,
@@ -215,16 +284,44 @@ for (const category of lessonLevelOnlineSubcategories) {
             }]
         },
         options: {
-            responsive: true,
+            responsive: false,
+            maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    top: 15,
+                    bottom: 30,
+                    left: 15,
+                    right: 15,
+                }
+            },
             plugins: {
                 legend: {
                     display: false
                 },
             },
             scales: {
+                x: {
+                    offset: true,
+                    ticks: {
+                        font: {
+                            size: 14,
+                        },
+                        maxRotation: 0,
+                        minRotation: 0,
+                        autoSkip: false,
+                        align: 'center',
+                        padding: 6,
+                    }
+                },
                 y: {
-                    suggestedMin: 0,
-                    suggestedMax: 2
+                    min: 0,
+                    max: 2,
+                    ticks: {
+                        stepSize: 1,
+                        callback: function (value) {
+                            return scoreToFrequencyLabel(value);
+                        }
+                    }
                 }
             },
             scale: {
@@ -246,7 +343,7 @@ for (const category of lessonLevelOnlineSubcategories) {
                                 'Content-Type': 'application/json',
                                 'X-CSRF-TOKEN': csrfToken,
                             },
-                            body: JSON.stringify({image: base64Image, name: 'online' + category.name})
+                            body: JSON.stringify({ image: base64Image, name: 'online' + category.name })
                         }).then(response => {
 
                         }).catch(error => {
@@ -264,7 +361,7 @@ for (const category of lessonLevelOnlineSubcategories) {
         const label = categoryLabels[i];
         const data = categoryData[i];
 
-        graphAriaLabel += label + ": " + data + ". ";
+        graphAriaLabel += label + ": " + scoreToFrequencyLabel(data) + ". ";
     }
 
     graph.ariaLabel = graphAriaLabel;
@@ -286,14 +383,14 @@ const moduleLevelDataArray = {};
 for (const [i, [_, item]] of Object.entries(moduleLevelData).entries()) {
 
     for (const [_, item2] of Object.entries(item)) {
-            moduleLevelDataArray[j] = parseInt(item2);
+        moduleLevelDataArray[j] = parseInt(item2);
         j++;
     }
 }
 
 let outerLabelsToRemove = [];
 let outerDataToKeep = [];
-for (i = 0; i < outerData.length; i++) {
+for (let i = 0; i < outerData.length; i++) {
     if (outerData[i] == 0) {
         outerLabelsToRemove.push(outerLabels[i]);
     } else {
@@ -302,7 +399,7 @@ for (i = 0; i < outerData.length; i++) {
 }
 outerData = outerDataToKeep;
 
-for (label of outerLabelsToRemove) {
+for (let label of outerLabelsToRemove) {
     outerLabels.splice(outerLabels.indexOf(label), 1);
 }
 
@@ -319,33 +416,33 @@ if (!outerData.length) {
 
 const moduleLevelDataGraph = document.getElementById('moduleLevelDataGraph');
 
-innerLabels = [];
-for ([key, value] of Object.entries(moduleLevelDataArray)) {
+let innerLabels = [];
+for (const [key, value] of Object.entries(moduleLevelDataArray)) {
     innerLabels.push(parseInt(key) + 1 + ". " + moduleLevelLabels[key]);
 }
 
-innerData = [];
-innerColors = [];
-for ([key, value] of Object.entries(moduleLevelDataArray)) {
+let innerData = [];
+let innerColors = [];
+for (const [key, value] of Object.entries(moduleLevelDataArray)) {
     innerData.push(1);
     let color;
     switch (value) {
-    case 1:
-        color = legendColors[0];
-        break;
-    case 2:
-        color = legendColors[1];
-        break;
-    case 3:
-        color = legendColors[2];
-        break;
-    case 4:
-        color = legendColors[3];
-        break;
-    case 0:
-        color = legendColors[4];
-        break;
-}
+        case 1:
+            color = legendColors[0];
+            break;
+        case 2:
+            color = legendColors[1];
+            break;
+        case 3:
+            color = legendColors[2];
+            break;
+        case 4:
+            color = legendColors[3];
+            break;
+        case 0:
+            color = legendColors[4];
+            break;
+    }
     innerColors.push(color);
 }
 
@@ -474,7 +571,7 @@ new Chart(moduleLevelDataGraph, {
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': csrfToken,
                         },
-                        body: JSON.stringify({image: base64Image, name: 'wheelInside'})
+                        body: JSON.stringify({ image: base64Image, name: 'wheelInside' })
                     }).then(response => {
 
                     }).catch(error => {

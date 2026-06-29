@@ -6,10 +6,10 @@ forms.forEach((form) => {
     const quill = new Quill(container, {
         modules: {
             toolbar: [
-                [{header: [1, 2, false]}],
+                [{ header: [1, 2, false] }],
                 ['bold', 'italic', 'underline', 'strike'],
-                [{'list': 'ordered'}, {'list': 'bullet'}],
-                [{'color': []}, {'background': []}],
+                [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                [{ 'color': [] }, { 'background': [] }],
                 ['link', 'image'],
             ],
         },

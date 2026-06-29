@@ -10,7 +10,7 @@
     @section('scripts')
         <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.5/dist/purify.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js" defer></script>
-        <script src="{{ asset('js/text-editor.js') }}" defer></script>
+        @vite('resources/js/text-editor.js')
     @endsection
     <header>
         @php

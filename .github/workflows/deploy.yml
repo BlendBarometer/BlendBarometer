@@ -1,0 +1,62 @@
+name: Deploy Blendbarometer - Test (SFTP)
+
+on:
+#   push:
+#     branches:
+#       - test
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-test
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── Install PHP dependencies ───────────────────────────────
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, ctype, json, bcmath
+
+      - name: Install Composer dependencies
+        run: composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
+
+      # ── Build front-end assets ─────────────────────────────────
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build assets
+        run: npm run build
+
+      # ── Prepare upload (remove dev / CI-only files) ────────────
+      - name: Prepare deployment payload
+        run: bash scripts/prepare-deploy.sh
+
+      # ── Upload to SFTP ─────────────────────────────────────────
+      - name: Install lftp (SFTP client)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lftp
+
+      - name: Deploy to test via SFTP
+        env:
+          FTP_HOST: ${{ secrets.TEST_FTP_SERVER }}
+          FTP_USER: ${{ secrets.TEST_FTP_USER }}
+          FTP_PASSWORD: ${{ secrets.TEST_FTP_PASSWORD }}
+          FTP_PORT: ${{ secrets.TEST_FTP_PORT }}
+          FTP_PROTOCOL: ${{ secrets.TEST_FTP_PROTOCOL }}
+          FTP_PATH: ${{ secrets.TEST_FTP_PATH }}
+        run: bash scripts/deploy-upload.sh
