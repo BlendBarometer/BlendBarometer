@@ -17,6 +17,28 @@ function scoreToFrequencyLabel(value) {
     return String(value);
 }
 
+/**
+ * Wrap a label string into multiple lines (array) by splitting on spaces.
+ * Returns an array of lines for Chart.js to render multi-line ticks.
+ */
+function wrapLabel(label, maxCharsPerLine = 14) {
+    if (!label || typeof label !== 'string') return label;
+    const words = label.split(' ');
+    const lines = [];
+    let current = '';
+
+    for (const word of words) {
+        if ((current + (current ? ' ' : '') + word).length <= maxCharsPerLine) {
+            current = current ? current + ' ' + word : word;
+        } else {
+            if (current) lines.push(current);
+            current = word;
+        }
+    }
+    if (current) lines.push(current);
+    return lines.length === 1 ? lines : lines;
+}
+
 const lessonLevelGraph = document.getElementById('lessonLevel');
 
 Chart.defaults.font.size = 16;
@@ -121,6 +143,13 @@ for (const category of lessonLevelSubcategories) {
     const subCatId = category.id;
     const graph = document.getElementById('physical-' + subCatId);
     const categoryLabels = lessonLevelPhysicalQuestions[subCatId] ? lessonLevelPhysicalQuestions[subCatId] : [];
+    // Normalize specific peerfeedback labels to a short, consistent form
+    const normalizedCategoryLabels = categoryLabels.map(l => {
+        const s = String(l || '');
+        if (/peerfeedback/i.test(s)) return 'Peerfeedback';
+        if (/Spelvorm/i.test(s)) return 'Spelvorm';
+        return s;
+    });
 
     let categoryData = [];
     if (lessonLevelDataAll && lessonLevelDataAll[subCatId]) {
@@ -129,8 +158,8 @@ for (const category of lessonLevelSubcategories) {
 
     new Chart(graph, {
         type: 'bar',
-        data: {
-            labels: categoryLabels,
+            data: {
+            labels: normalizedCategoryLabels.map(l => wrapLabel(l, 14)),
             datasets: [
                 {
                     label: 'Punten gescoord',
@@ -140,13 +169,35 @@ for (const category of lessonLevelSubcategories) {
             ]
         },
         options: {
-            responsive: true,
+            responsive: false,
+            maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    top: 15,
+                    bottom: 30,
+                    left: 15,
+                    right: 15,
+                }
+            },
             plugins: {
                 legend: {
                     display: false
                 },
             },
             scales: {
+                x: {
+                    offset: true,
+                    ticks: {
+                        font: {
+                            size: 14,
+                        },
+                        maxRotation: 0,
+                        minRotation: 0,
+                        autoSkip: false,
+                        align: 'center',
+                        padding: 6,
+                    }
+                },
                 y: {
                     min: 0,
                     max: 2,
@@ -209,6 +260,12 @@ for (const category of lessonLevelOnlineSubcategories) {
     const graph = document.getElementById('online-' + subCatId);
 
     const categoryLabels = lessonLevelOnlineQuestions[subCatId] ? lessonLevelOnlineQuestions[subCatId] : [];
+    // Normalize specific peerfeedback labels to a short, consistent form
+    const normalizedCategoryLabelsOnline = categoryLabels.map(l => {
+        const s = String(l || '');
+        if (/peerfeedback/i.test(s)) return 'Peerfeedback';
+        return s;
+    });
     let categoryData = [];
     if (lessonLevelDataAll && lessonLevelDataAll[subCatId]) {
         categoryData = Object.values(lessonLevelDataAll[subCatId]).map(Number);
@@ -216,8 +273,8 @@ for (const category of lessonLevelOnlineSubcategories) {
 
     new Chart(graph, {
         type: 'bar',
-        data: {
-            labels: categoryLabels,
+            data: {
+            labels: normalizedCategoryLabelsOnline.map(l => wrapLabel(l, 14)),
             datasets: [{
                 label: 'Punten gescoord',
                 data: categoryData,
@@ -225,13 +282,35 @@ for (const category of lessonLevelOnlineSubcategories) {
             }]
         },
         options: {
-            responsive: true,
+            responsive: false,
+            maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    top: 15,
+                    bottom: 30,
+                    left: 15,
+                    right: 15,
+                }
+            },
             plugins: {
                 legend: {
                     display: false
                 },
             },
             scales: {
+                x: {
+                    offset: true,
+                    ticks: {
+                        font: {
+                            size: 14,
+                        },
+                        maxRotation: 0,
+                        minRotation: 0,
+                        autoSkip: false,
+                        align: 'center',
+                        padding: 6,
+                    }
+                },
                 y: {
                     min: 0,
                     max: 2,
