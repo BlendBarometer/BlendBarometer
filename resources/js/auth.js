@@ -4,20 +4,17 @@ const inputs = document.querySelectorAll('input.rectangle');
 inputs.forEach((input, index) => {
     input.addEventListener('input', () => {
         const reg = /\D/;
-        if (reg.test(input.value))
-        {
+        if (reg.test(input.value)) {
             input.value = '';
             return;
         }
-        else if (input.value.length === 1 && index < inputs.length - 1)
-        {
+        else if (input.value.length === 1 && index < inputs.length - 1) {
             inputs[index + 1].focus();
         }
     });
 
     input.addEventListener('keydown', (e) => {
-        if (e.key === 'Backspace' && input.value.length === 0 && index > 0)
-        {
+        if (e.key === 'Backspace' && input.value.length === 0 && index > 0) {
             inputs[index - 1].focus();
         }
     });
@@ -29,8 +26,7 @@ inputs.forEach((input, index) => {
         const reg = /\D/g;
         const digits = paste.replace(reg, '');
 
-        for (i = 0; i < inputs.length && i < digits.length; i++)
-        {
+        for (i = 0; i < inputs.length && i < digits.length; i++) {
             inputs[i].value = digits[i];
         }
     });

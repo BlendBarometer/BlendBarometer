@@ -33,11 +33,11 @@
                 <div class="row mb-2">
                     <div class="col">
                         <strong class="mb-3 d-block fs-4">Fysieke Leeractiviteiten</strong>
-                        <canvas id="physical-{{ $categories->where('question_category_id', 1)->first()->id }}" class="bg-white rounded mb-2" role="img"></canvas>
+                        <canvas id="physical-{{ $categories->where('question_category_id', 1)->first()->id }}" width="600" height="300" class="bg-white rounded mb-2" role="img"></canvas>
                     </div>
                     <div class="col">
                         <strong class="mb-3 d-block fs-4">Online Leeractiviteiten</strong>
-                        <canvas id="online-{{ $categories->where('question_category_id', 2)->first()->id }}" class="bg-white rounded mb-2" role="img"></canvas>
+                        <canvas id="online-{{ $categories->where('question_category_id', 2)->first()->id }}" width="600" height="300" class="bg-white rounded mb-2" role="img"></canvas>
                     </div>
                 </div>
                 <h5 class="mt-3">{{ $name }}</h5>
@@ -110,8 +110,7 @@
         integrity="sha512-JPcRR8yFa8mmCsfrw4TNte1ZvF1e3+1SdGMslZvmrzDYxS69J7J49vkFL8u6u8PlPJK+H3voElBtUCzaXj+6ig=="
         crossorigin="anonymous"
         referrerpolicy="no-referrer"></script>
-<script src="{{ URL::asset('js/custom-tooltip.js') }}?v={{ filemtime(public_path('js/custom-tooltip.js')) }}"></script>
-<script src="{{ URL::asset('js/results-graphs.js') }}?v={{ filemtime(public_path('js/results-graphs.js')) }}"></script>
+@vite('resources/js/results-graphs.js')
 
 <script>
     document.addEventListener("keydown", (e) => {

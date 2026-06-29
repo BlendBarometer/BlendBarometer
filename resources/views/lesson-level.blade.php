@@ -69,6 +69,6 @@
 
         <x-navigation-buttons-with-submit :previous="$previous ?? route('lesson-level.previous', $currentStep)" />
     </form>
-    <script src="{{ asset('js/custom-question.js') }}"></script>
+    @vite('resources/js/custom-question.js')
     <script src="https://unpkg.com/twemoji@latest/dist/twemoji.min.js" crossorigin="anonymous"></script>
 </x-progress-step>

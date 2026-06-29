@@ -508,8 +508,8 @@ class ReportController extends Controller
 
             // Labels row
             $graphTable->addRow();
-            $graphTable->addCell(6000)->addText('Fysieke Activiteiten', ['size' => 13], ['alignment' => Jc::LEFT], ['bold' => true]);
-            $graphTable->addCell(6000)->addText('Online Activiteiten', ['size' => 13], ['alignment' => Jc::LEFT], ['bold' => true]);
+            $graphTable->addCell(6000)->addText('Fysieke Activiteiten', ['size' => 13, 'bold' => true], ['alignment' => Jc::LEFT]);
+            $graphTable->addCell(6000)->addText('Online Activiteiten', ['size' => 13, 'bold' => true], ['alignment' => Jc::LEFT]);
 
             $graphTable->addRow();
 

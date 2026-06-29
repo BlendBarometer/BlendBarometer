@@ -19,7 +19,7 @@
 
 .module-input:checked+.module-label::after {
     content: "";
-    background-image: url("../images/checkmark.svg");
+    background-image: url("/images/checkmark.svg");
     background-repeat: no-repeat;
     background-position: center;
     background-size: contain;
