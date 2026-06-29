@@ -1,6 +1,6 @@
 <x-layout>
     @section('styles')
-        <link rel="stylesheet" href="{{ asset('css/home.css') }}">
+        @vite('resources/css/home.css')
     @endsection
     <main class="container">
         <section class="intro px-4 min-vh-100">

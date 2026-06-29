@@ -1,22 +1,22 @@
 @font-face {
     font-family: Poppins;
-    src: url('../fonts/Poppins-Regular.ttf');
+    src: url('/fonts/Poppins-Regular.ttf');
 }
 
 @font-face {
     font-family: Poppins;
-    src: url('../fonts/Poppins-Bold.ttf');
+    src: url('/fonts/Poppins-Bold.ttf');
     font-weight: bold;
 }
 
 @font-face {
     font-family: OpenDyslexic;
-    src: url('../fonts/OpenDyslexic-Regular.otf');
+    src: url('/fonts/OpenDyslexic-Regular.otf');
 }
 
 @font-face {
     font-family: OpenDyslexic;
-    src: url('../fonts/OpenDyslexic-Bold.otf');
+    src: url('/fonts/OpenDyslexic-Bold.otf');
     font-weight: bold;
 }
 
@@ -28,7 +28,8 @@ body.dyslexia-mode {
     --bs-body-font-family: OpenDyslexic, sans-serif;
 }
 
-body.dyslexia-mode .tooltip, .font-dyslexia {
+body.dyslexia-mode .tooltip,
+.font-dyslexia {
     font-family: 'OpenDyslexic', sans-serif !important;
 }
 
@@ -50,21 +51,21 @@ body.dyslexia-mode .tooltip, .font-dyslexia {
     cursor: pointer;
 }
 
-.form-check-input:focus + .form-check-label {
+.form-check-input:focus+.form-check-label {
     outline-width: 2px;
     outline-style: solid;
     outline-color: var(--bs-blue);
 }
 
-.form-check-input:checked + .form-check-label {
+.form-check-input:checked+.form-check-label {
     position: relative;
     outline: 5px solid var(--bs-primary, #0d6efd) !important;
     outline-offset: -2px;
 }
 
-.form-check-input:checked + .form-check-label::after {
+.form-check-input:checked+.form-check-label::after {
     content: "";
-    background-image: url("../images/check-circle.svg");
+    background-image: url('/images/check-circle.svg');
     background-repeat: no-repeat;
     background-position: center;
     background-size: contain;
@@ -75,7 +76,7 @@ body.dyslexia-mode .tooltip, .font-dyslexia {
     height: 30px;
 }
 
-.form-check-input:checked + .form-check-label + svg {
+.form-check-input:checked+.form-check-label+svg {
     display: block !important;
 }
 
@@ -112,7 +113,7 @@ h6 {
     padding: .75em 1em !important;
 }
 
-.form-check-input:focus + .explicit-focus-visible {
+.form-check-input:focus+.explicit-focus-visible {
     outline: 0;
     box-shadow: 0 0 0 0.5rem rgba(49, 132, 253, .5);
 }
@@ -120,4 +121,73 @@ h6 {
 .btn-flat:focus-visible {
     outline: 0;
     box-shadow: 0 0 0 0.25rem rgba(49, 132, 253, .5) !important;
+}
+
+.sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    width: 22rem;
+    min-width: 22rem;
+}
+
+.step-vertical {
+    display: flex;
+    align-items: center;
+    position: relative;
+    padding-bottom: 30px;
+}
+
+/* Vertical Line */
+.step-vertical:not(:last-child)::before {
+    content: "";
+    position: absolute;
+    left: 19px;
+    top: 40px;
+    width: 2px;
+    height: calc(100% - 30px);
+}
+
+.complete::before,
+.active::before {
+    background-color: #0D6EFD;
+}
+
+.to-do::before {
+    background-color: #6c757d;
+}
+
+/* Step Icon Container */
+.step-vertical-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    z-index: 2;
+}
+
+.complete .step-vertical-icon {
+    background-color: #0D6EFD;
+    color: white;
+}
+
+.active .step-vertical-icon img {
+    height: 40px;
+}
+
+/* Content alignment */
+.step-vertical-content {
+    margin-left: 15px;
+}
+
+.step-vertical-content h4 {
+    margin-bottom: 5px;
+    font-size: 1.1rem;
+}
+
+.step-vertical-content p {
+    color: #6c757d;
+    margin-bottom: 0;
 }

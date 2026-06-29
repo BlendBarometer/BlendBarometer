@@ -1,3 +1,5 @@
+import { externalTooltipHandler } from './custom-tooltip';
+
 let hasSavedImages = false;
 
 const physicalColor = {
@@ -158,7 +160,7 @@ for (const category of lessonLevelSubcategories) {
 
     new Chart(graph, {
         type: 'bar',
-            data: {
+        data: {
             labels: normalizedCategoryLabels.map(l => wrapLabel(l, 14)),
             datasets: [
                 {
@@ -273,7 +275,7 @@ for (const category of lessonLevelOnlineSubcategories) {
 
     new Chart(graph, {
         type: 'bar',
-            data: {
+        data: {
             labels: normalizedCategoryLabelsOnline.map(l => wrapLabel(l, 14)),
             datasets: [{
                 label: 'Punten gescoord',
@@ -388,7 +390,7 @@ for (const [i, [_, item]] of Object.entries(moduleLevelData).entries()) {
 
 let outerLabelsToRemove = [];
 let outerDataToKeep = [];
-for (i = 0; i < outerData.length; i++) {
+for (let i = 0; i < outerData.length; i++) {
     if (outerData[i] == 0) {
         outerLabelsToRemove.push(outerLabels[i]);
     } else {
@@ -397,7 +399,7 @@ for (i = 0; i < outerData.length; i++) {
 }
 outerData = outerDataToKeep;
 
-for (label of outerLabelsToRemove) {
+for (let label of outerLabelsToRemove) {
     outerLabels.splice(outerLabels.indexOf(label), 1);
 }
 
@@ -414,14 +416,14 @@ if (!outerData.length) {
 
 const moduleLevelDataGraph = document.getElementById('moduleLevelDataGraph');
 
-innerLabels = [];
-for ([key, value] of Object.entries(moduleLevelDataArray)) {
+let innerLabels = [];
+for (const [key, value] of Object.entries(moduleLevelDataArray)) {
     innerLabels.push(parseInt(key) + 1 + ". " + moduleLevelLabels[key]);
 }
 
-innerData = [];
-innerColors = [];
-for ([key, value] of Object.entries(moduleLevelDataArray)) {
+let innerData = [];
+let innerColors = [];
+for (const [key, value] of Object.entries(moduleLevelDataArray)) {
     innerData.push(1);
     let color;
     switch (value) {

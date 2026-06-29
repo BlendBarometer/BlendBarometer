@@ -124,5 +124,5 @@
 <br />
 
 @once
-    <script src="{{ asset('js/module-information-fields.js') }}" defer></script>
+    @vite('resources/js/module-information-fields.js')
 @endonce

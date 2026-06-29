@@ -1,7 +1,7 @@
 <x-progress-step section="Moduleniveau" title="Vragen op moduleniveau" description="" current_step_name="moduleLevel">
 
     @section('styles')
-        <link rel="stylesheet" href="{{ asset('css/module-level.css') }}">
+        @vite('resources/css/module-level.css')
     @endsection
 
     <div class="mb-3">

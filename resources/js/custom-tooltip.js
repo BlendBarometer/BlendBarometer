@@ -18,7 +18,7 @@ const getOrCreateTooltip = (chart) => {
     return tooltipEl;
 };
 
-const externalTooltipHandler = (context) => {
+export const externalTooltipHandler = (context) => {
     // Tooltip Element
     const { chart, tooltip } = context;
     const tooltipEl = getOrCreateTooltip(chart);
